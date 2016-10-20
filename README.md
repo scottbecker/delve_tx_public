@@ -5,10 +5,13 @@ This is a set of transcriptic package protocols.
 ## Protocol Overview
 
 ###Bacteria Freezing: 
-⋅⋅⋅Take bacteria from a well, amplify it, freeze (-80C) 10 tubes w/ 115ul each of it
-Bacteria Pelleting: Take bacteria from a well, amplify it, possibly induce to high copy number, and pellet
-DNA Resuspension: Add TE to a tube with DNA, mix, measure concentration, and optionally split the tube (-80C) into a 4C storage working stock
-Create Water Container: Handy test protocol to mimick reagent containers in test mode by making a container with every well filled to max volume with water
+Take bacteria from a well, amplify it, freeze (-80C) 10 tubes w/ 115ul each of it
+###Bacteria Pelleting: 
+Take bacteria from a well, amplify it, possibly induce to high copy number, and pellet
+###DNA Resuspension: 
+Add TE to a tube with DNA, mix, measure concentration, and optionally split the tube (-80C) into a 4C storage working stock
+###Create Water Container:
+Handy test protocol to mimick reagent containers in test mode by making a container with every well filled to max volume with water
 
 
 
