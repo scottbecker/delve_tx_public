@@ -5,7 +5,7 @@ This is a set of transcriptic package protocols.
 ## Protocol Overview
 
 ###Bacteria Freezing: 
-Take bacteria from a well, amplify it, freeze (-80C) 10 tubes w/ 115ul each of it
+Take bacteria from a well, amplify it, freeze (-80C) 10 tubes w/ 115ul each of it. Requires tubes to have a property "cell_line_name" with the name of the bacteria cell line.
 ###Bacteria Pelleting: 
 Take bacteria from a well, amplify it, possibly induce to high copy number, and pellet
 ###DNA Resuspension: 
