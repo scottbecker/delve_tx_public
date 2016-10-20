@@ -42,8 +42,10 @@ Create Water Container: Handy test protocol to mimick reagent containers in test
 
 5. Run the protocol from the src dir
 
+```bash
 cd src
 python protocols/bacteria_pelleting/protocol.py protocols/bacteria_pelleting/sample_input.json
+```
 
 ## Publishing packages (requires unix)
 
@@ -53,10 +55,11 @@ You can add the packages to your transcriptic UI (allowing users to use them thr
 
 2. Run the following commands from the build dir
 
+```bash
 python set_test_mode_false.py
 bash make_zip.sh
 transcriptic upload-release release.zip "YourPackageName"
-
+```
 
  
 
