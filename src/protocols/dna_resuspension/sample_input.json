@@ -1,0 +1,25 @@
+{
+                "refs": {
+                    "dna_tube": {
+                        "cover": null, 
+                        "label": "dna_tube", 
+                        "aliquots": {
+                            "0": {
+                                "volume": "100.0:microliter", 
+                                "name": null, 
+                                "properties": {}
+                            }
+                        }, 
+                        "type": "micro-2.0", 
+                        "id": "ct198stskpt2yw", 
+                        "store": "cold_80"
+                    }
+                }, 
+                "parameters": {
+                    "split_tubes": true, 
+                    "test_mode": true, 
+                    "dna_tube": "dna_tube", 
+                    "resuspension_volume_uL": 500, 
+                    "measure_concentration": true
+                }
+            }

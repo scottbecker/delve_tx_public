@@ -1,0 +1,24 @@
+{
+                "refs": {
+                    "hme63": {
+                        "cover": null, 
+                        "label": "dna_tube", 
+                        "aliquots": {
+                            "0": {
+                                "volume": "100.0:microliter", 
+                                "name": null, 
+                                "properties": {}
+                            }
+                        }, 
+                        "type": "micro-2.0", 
+                        "id": "ct19fyypa2sfns", 
+                        "store": "cold_80"
+                    }
+                }, 
+                "parameters": {
+                    "destroy_source_tube": false, 
+                    "test_mode": true, 
+                    "antibiotic": "cell_line", 
+                    "bacteria_well": "hme63/0"
+                }
+            }

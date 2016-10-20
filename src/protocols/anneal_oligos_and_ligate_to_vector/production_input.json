@@ -1,0 +1,52 @@
+{
+    "refs": {
+        "linearized_vector_tube": {
+            "cover": null,
+            "label": "linearized_vector_tube",
+            "aliquots": {
+                "0": {
+                    "volume": "48.0:microliter",
+                    "name": null,
+                    "properties": {}
+                }
+            },
+            "type": "micro-2.0",
+            "id": "ct19fbt2vd5ed8",
+            "store": "cold_80"
+        },
+        "oligo2_tube": {
+            "cover": null,
+            "label": "oligo2_tube",
+            "aliquots": {
+                "0": {
+                    "volume": "125.0:microliter",
+                    "name": null,
+                    "properties": {}
+                }
+            },
+            "type": "micro-2.0",
+            "id": "ct19gh4nsjy9ae",
+            "store": "cold_4"
+        },
+        "oligo1_tube": {
+            "cover": null,
+            "label": "oligo1_tube",
+            "aliquots": {
+                "0": {
+                    "volume": "125.0:microliter",
+                    "name": null,
+                    "properties": {}
+                }
+            },
+            "type": "micro-2.0",
+            "id": "ct19gh4ksmgrgp",
+            "store": "cold_4"
+        }
+    },
+    "parameters": {
+        "linearized_vector_tube": "linearized_vector_tube",
+        "test_mode": true,
+        "oligo2_tube": "oligo2_tube",
+        "oligo1_tube": "oligo1_tube"
+    }
+}

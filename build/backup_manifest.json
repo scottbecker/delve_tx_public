@@ -1,0 +1,25 @@
+{
+"format": "python",
+"license": "Proprietary",
+"protocols": [{
+	"name": "PrepareStockCultureMedium",
+	"version": "1.0.0",
+	"description": "Measure absorbance of various dilutions of OrangeG dye.",
+	"command_string": "python -m protocols.prepare_stock_culture_medium.protocol",
+	"inputs": {
+	"fake_input": {
+		"type": "bool",
+		"default": false,
+		"label": "your_label",
+		"required": true,
+		"description": "This doesn't do anything"
+	}
+	},
+	"preview": {
+	"refs": {},
+	"parameters": {
+		"fake_input": false
+	}
+	}
+}]
+}
