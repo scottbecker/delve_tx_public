@@ -41,15 +41,18 @@ Handy test protocol to mimick reagent containers in test mode by making a contai
 ```
 
 4. Add the following to src/test_mode_auth.json (used for submitting test jobs)
-```
+
+ ```
 {
   "X_User_Email":"your email",
   "X_User_Token":"your user test token",
   "org_name": "your org name"
 }
 ```
+
 5. Run the protocol from the src dir
-```bash
+
+ ```bash
 cd src
 python protocols/bacteria_pelleting/protocol.py protocols/bacteria_pelleting/sample_input.json
 ```
@@ -62,7 +65,7 @@ You can add the packages to your transcriptic UI (allowing users to use them thr
 
 2. Run the following commands from the build dir
 
-```bash
+ ```bash
 python set_test_mode_false.py
 bash make_zip.sh
 transcriptic upload-release release.zip "YourPackageName"
