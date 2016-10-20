@@ -2425,15 +2425,6 @@ class CustomProtocol(Protocol):
     
         """
         
-        #bug with lb amp not being dispensable
-        if reagent=='rs18s8x4qbsvjz':
-            reagent = 'lb-broth-100ug-ml-amp'
-            is_resource_id = False
-            
-        if reagent=='rs17bafcbmyrmh':
-            reagent = 'lb-broth-noAB'
-            is_resource_id = False
-        
         super(CustomProtocol,self).dispense(ref, reagent, columns, 
                                             speed_percentage=speed_percentage, is_resource_id=is_resource_id)  
         
@@ -2774,7 +2765,7 @@ class CustomProtocol(Protocol):
         
         min(all,25uL) DNA inside source wells will be purified and moved to dest_wells.
         
-        If dest_wells is blank, a 1.5mL tube will be created for each source well.
+        If dest_wells is blank, a pcr plate will be created and a well assigned as a dest well for each source well.
         
         This protocol is intended mostly for PCR cleanup where you are extracting a single band 
         
@@ -2785,8 +2776,12 @@ class CustomProtocol(Protocol):
             dest_wells = convert_to_wellgroup(dest_wells)
         else:
             dest_wells = []
+            
+            dest_plate = self.ref("purified_dna_plate", None,
+                                  "96-pcr", storage="cold_4")      
+            next_well_index = 0
+            
             for i, source_well in enumerate(source_wells):
-
                 if source_well.name:
                     source_name = source_well.name
                 elif source_well.container.name:
@@ -2794,9 +2789,12 @@ class CustomProtocol(Protocol):
                 else:
                     source_name = 'product_%s'%i
                     
-                dest_well = self.ref("purified_" + source_name, None,
-                                     "micro-1.5", storage="cold_4").well(0)
-                          
+                dest_well = dest_plate.well(next_well_index)
+                
+                dest_well.name = 'purified_%s'%source_name
+                
+                next_well_index+=1
+                
                 dest_wells.append(dest_well)
             
         
