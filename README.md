@@ -12,7 +12,8 @@ Take bacteria from a well, amplify it, possibly induce to high copy number, and 
 Add TE to a tube with DNA, mix, measure concentration, and optionally split the tube (-80C) into a 4C storage working stock
 ###Create Water Container:
 Handy test protocol to mimick reagent containers in test mode by making a container with every well filled to max volume with water
-
+###Anneal Oligos and Ligate to Vector
+Anneal two oligos together and then ligate to a linearized vector. Vector must have 'Concentration (DNA)' property like '4.0:nanograms/microliter'
 
 
 ## Running protocols from the command line (requires unix)
