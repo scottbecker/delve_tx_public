@@ -1,4 +1,4 @@
-# delve_tx_public
+# Delve Therapeutics Public Transcriptic Protocols
 
 This is a set of transcriptic package protocols.
 
