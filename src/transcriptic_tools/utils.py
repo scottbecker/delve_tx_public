@@ -115,6 +115,9 @@ def set_property(wellorcontainer, property_name, value):
     """
     wells = convert_to_wellgroup(wellorcontainer)
     
+    if not isinstance(value, str):
+        value = str(value)
+    
     for well in wells:
         assert isinstance(well, Well)
         well.properties[property_name] = value

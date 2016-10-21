@@ -2661,7 +2661,7 @@ class CustomProtocol(Protocol):
         
         experimental_pcr_well = pcr_plate.wells(["A1"])[0]
         experimental_pcr_well.name = product_name     
-        experimental_pcr_well.properties['dna_length'] = product_length
+        experimental_pcr_well.properties['dna_length'] = str(product_length)
         
         pcr_wells = [experimental_pcr_well]
         
@@ -2793,11 +2793,13 @@ class CustomProtocol(Protocol):
                 elif source_well.container.name:
                     source_name = source_well.container.name
                 else:
-                    source_name = 'product_%s'%i
+                    source_name = 'gene_product_%s'%i
                     
                 dest_well = dest_plate.well(next_well_index)
                 
-                dest_well.name = 'purified_%s'%source_name
+                dest_well.name = source_name
+                
+                set_property(dest_well, 'dna_length', dna_lengths[i])
                 
                 next_well_index+=1
                 
