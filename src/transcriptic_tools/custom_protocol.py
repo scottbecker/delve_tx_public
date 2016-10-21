@@ -1125,10 +1125,7 @@ class CustomProtocol(Protocol):
         source = convert_to_wellgroup(source)
             
         dest = convert_to_wellgroup(dest)
-        
-        if len(dest) == 1 and len(source) > 1:
-            dest = WellGroup([dest[0]*len(source)])
-        
+
         if type(volume) == list:
             min_volume = min(volume)
         else:
