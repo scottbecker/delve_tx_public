@@ -17,7 +17,8 @@ from transcriptic_tools.utils import (ul, get_well_dead_volume,
                                       get_volume, floor_volume, hours, total_plate_available_volume,
                                       breakup_dispense_column_volumes, get_column_wells,
                                       set_property, ceil_volume, init_inventory_well,
-                                      touchdown_pcr, convert_stamp_shape_to_wells)
+                                      touchdown_pcr, convert_stamp_shape_to_wells,
+                                      convert_mass_to_volume, ug)
 from lib import lists_intersect, get_dict_optional_value, get_melting_temp
 from transcriptic_tools.enums import Reagent, Antibiotic, Temperature
 from instruction import MiniPrep
@@ -1056,6 +1057,7 @@ class CustomProtocol(Protocol):
             Well or WellGroup to which to transfer liquid.  The number of
             destination wells must match the number of source wells specified
             unless one_source is set to True.
+            You can have 1 dest well and multiple source wells (equivalent to a consolidate)
         volume : str, Unit, list
             The volume(s) of liquid to be transferred from source wells to
             destination wells.  Volume can be specified as a single string or
@@ -1123,6 +1125,9 @@ class CustomProtocol(Protocol):
         source = convert_to_wellgroup(source)
             
         dest = convert_to_wellgroup(dest)
+        
+        if len(dest) == 1 and len(source) > 1:
+            dest = WellGroup([dest[0]*len(source)])
         
         if type(volume) == list:
             min_volume = min(volume)
@@ -2655,7 +2660,8 @@ class CustomProtocol(Protocol):
         
         
         experimental_pcr_well = pcr_plate.wells(["A1"])[0]
-        experimental_pcr_well.name = product_name      
+        experimental_pcr_well.name = product_name     
+        experimental_pcr_well.properties['dna_length'] = product_length
         
         pcr_wells = [experimental_pcr_well]
         
@@ -2845,8 +2851,77 @@ class CustomProtocol(Protocol):
         return dest_wells
         
         
-    def linearize(self):
-        pass
+    def linearize_dna(self, vector_source_well,
+                      negative_control=True,
+                      gel_verify=True):        
+        """
+        
+        Cuts a vector with hindiii and sali.  
+        @TODO: update this method to take enzymes and dynamically generate protocol from http://nebcloner.neb.com/#!/redigest
+        
+        """
+        pcr_plate  = self.ref("linearized_%s"%vector_source_well.name,  cont_type="96-pcr", storage=Temperature.cold_4)
+        experiment_well = pcr_plate.well(0)        
+        experiment_well.name = "linearized_%s"%vector_source_well.name
+        
+        pcr_wells = [experiment_well]
+        
+        if negative_control:
+            negative_control_well = pcr_plate.well(1)
+            negative_control_well.name = 'uncut_%s'%vector_source_well.name
+            pcr_wells.append(negative_control_well)
         
         
+        # -------------------------------------------------------------
+        # Restriction enzyme cutting vector
+        # 2 experiments (1 without re)
+        # 50ul total reaction volume for cutting 1ug of DNA:
+        # yuL water
+        # 5ul CutSmart 10x
+        # xul vector (1ug of DNA)
+        # 1ul of each enzyme 
+        # 1ul fastap (dephosphorylation)
         
+        cutsmart_volume = ul(5)
+        enzyme_volume = ul(1)
+        antarctic_phos_volume = ul(1) # 5 units
+        antarctic_phos_buffer_volume =  ul(5)
+        vector_volume = convert_mass_to_volume(ug(1), vector_source_well)
+        water_volume = ul(50) - (2*enzyme_volume + vector_volume + cutsmart_volume + antarctic_phos_volume +\
+                                 antarctic_phos_buffer_volume)
+        
+        self.provision_by_name(Reagent.water, pcr_wells, water_volume)
+        self.mix(vector_source_well)
+        self.transfer(vector_source_well, pcr_wells, vector_volume, mix_after=True,
+                      one_source=True, one_tip=True)
+        self.provision_by_name(Reagent.cutsmart_buffer_10x, pcr_wells, cutsmart_volume)
+        if negative_control:
+            self.provision_by_name(Reagent.water, negative_control_well, 2*enzyme_volume+ \
+                                   antarctic_phos_buffer_volume + antarctic_phos_volume)
+        
+        self.provision_by_name(Reagent.hindiii, experiment_well, enzyme_volume)
+        self.provision_by_name(Reagent.sali, experiment_well, enzyme_volume)
+        
+        self.provision_by_name(Reagent.antarctic_phosphatase, experiment_well, antarctic_phos_volume)
+        self.provision_by_name(Reagent.antarctic_phosphatase_buffer_10x, experiment_well, antarctic_phos_buffer_volume)
+        
+        
+        assert all([well.volume == ul(50) for well in pcr_wells])
+        
+        self.mix(pcr_wells)
+        
+        #enzyme only takes 15min but we want to leave time for dephosphorylation
+        self.incubate(pcr_plate, "warm_37", "30:minute", shaking=False)
+        
+        #inactivate RE's (see this site for thermal temps)
+        #https://www.neb.com/tools-and-resources/usage-guidelines/heat-inactivation
+        self.thermocycle(pcr_plate, [{"cycles":  1, "steps": [{"temperature": "80:celsius", "duration": "20:minute"}]}], volume=ul(50))
+        
+        if gel_verify:
+            # --------------------------------------------------------------
+            # Gel electrophoresis, to ensure the cutting worked
+            #
+            self.mix(pcr_wells)
+            self.gel_separate(pcr_wells, ul(10), "agarose(10,2%)", 'ladder2', '15:minute', 'verify_linearization_gel')            
+                
+        return experiment_well

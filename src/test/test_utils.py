@@ -151,6 +151,31 @@ class TestUtils(unittest.TestCase):
                          ul(5))
         
         
+    def test_convert_moles_to_volume(self):
+        plate = create_blank_plate('24-deep')
+        dna_well = plate.well(0)
+        dna_well.volume = ml(10)
+    
+        dna_well.properties['Concentration (DNA)'] = '649:nanograms/microliter'
+        dna_well.properties['dna_length'] = 1000
+        
+        self.assertEqual(utils.convert_moles_to_volume(utils.pmol(1), 
+                                                       dna_well),
+                         ul(1))
+
+    def test_convert_moles_to_volume2(self):
+        plate = create_blank_plate('24-deep')
+        dna_well = plate.well(0)
+        dna_well.volume = ml(10)
+    
+        dna_well.properties['Concentration (DNA)'] = '59.6:nanograms/microliter'
+        dna_well.properties['dna_length'] = 5329
+    
+        self.assertEqual(utils.convert_moles_to_volume(utils.pmol(0.1), 
+                                                       dna_well),
+                         ul(6))    
+    
+        
     def test_convert_stamp_shape_to_wells(self):
         plate1 = create_blank_plate('96-flat')
         plate2 = create_blank_plate('96-flat')

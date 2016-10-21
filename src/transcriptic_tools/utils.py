@@ -346,6 +346,10 @@ def ml(milliliters):
     """Unicode function name for creating microliter volumes"""
     return ul(milliliters*1000)
 
+def pmol(picomoles):
+    """Unicode function name for creating picomoles"""
+    return Unit(picomoles,"picomole")  
+
 def ensure_list(potential_item_or_items):
     try:
         some_object_iterator = iter(potential_item_or_items)
@@ -457,6 +461,21 @@ def convert_mass_to_volume(mass_to_convert,dna_well):
     dna_concentration_ng_per_ul = Unit(mass_magnitude,mass_units).to('nanogram/microliter')
     dna_concentration_ul_per_ng = (1/dna_concentration_ng_per_ul).to('microliter/nanogram')
     return ul(math.ceil((mass_to_convert_ng * dna_concentration_ul_per_ng).magnitude))    
+
+
+def convert_moles_to_volume(moles_to_convert,dna_well):
+    
+    ng_per_pmol_1kb = Unit(649,'nanogram/picomole')
+    
+    dna_length = int(dna_well.properties['dna_length'])
+    
+    moles_to_convert_pmol = moles_to_convert.to('picomole')
+    
+    mass_to_convert_ng = moles_to_convert_pmol * ng_per_pmol_1kb * dna_length / 1000.0
+    
+    return convert_mass_to_volume(mass_to_convert_ng, dna_well)
+    
+    
 
 
 def convert_stamp_shape_to_wells(source_origin, dest_origin, shape=dict(rows=8,

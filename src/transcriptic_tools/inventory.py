@@ -18,7 +18,7 @@ def get_transcriptic_inventory():
         Reagent.water       : 'rs17gmh5wafm5p', # catalog; Autoclaved MilliQ H2O; ambient
         'dh5a'        : 'rs16pbj944fnny', # catalog; Zymo DH5a; cold_80
         'gibson_mix'  : 'rs16pfatkggmk5', # catalog; Gibson Mix (2X); cold_20
-        'nebuilder_master_mix': 'rs18pc86ykcep6', # catalog; NEBuilder MasterMix
+        Reagent.nebuilder_master_mix: 'rs18pc86ykcep6', # catalog; NEBuilder MasterMix
         Reagent.lb_miller   : 'rs17bafcbmyrmh', # catalog; LB Broth Miller; cold_4
         Reagent.amp : 'rs17msfk8ujkca', # catalog; Ampicillin 100mg/ml; cold_20
         Reagent.spc: 'rs17pm6deqjep7',
@@ -27,6 +27,9 @@ def get_transcriptic_inventory():
         Reagent.cam: 'rs17p6t8ty2ny4',
         Reagent.lb_amp: 'rs18s8x4qbsvjz',
         Reagent.lb_kan: 'rs18s8x88zz9ee',
+        Reagent.fastap: 'rs16pc9925vae3',
+        Reagent.antarctic_phosphatase: 'rs17sh65xxym4k',
+        Reagent.antarctic_phosphatase_buffer_10x: 'rs17sh6bqyawz3',
         #doesn't exist anymore
         #Reagent.tb_amp: 'rs18xr22jq7vtz',
         

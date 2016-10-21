@@ -57,8 +57,10 @@ class Reagent(CustomEnum):
     t4_polynucleotide_kinase = 43
     t4_polynucleotide_kinase_buffer_a_10x = 44
     atp_100mM = 45
-    #next is 48
-    
+    fastap = 48
+    antarctic_phosphatase =  49
+    antarctic_phosphatase_buffer_10x =  50
+    nebuilder_master_mix = 51
     
     @property
     def is_dispensable(self):
