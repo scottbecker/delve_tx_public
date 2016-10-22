@@ -460,8 +460,7 @@ def convert_mass_to_volume(mass_to_convert,dna_well):
     
     mass_to_convert_ng = mass_to_convert.to('nanogram')
     
-    mass_magnitude,mass_units = dna_well.properties['Concentration (DNA)'].split(':')
-    dna_concentration_ng_per_ul = Unit(mass_magnitude,mass_units).to('nanogram/microliter')
+    dna_concentration_ng_per_ul = Unit(dna_well.properties['Concentration (DNA)']).to('nanogram/microliter')
     dna_concentration_ul_per_ng = (1/dna_concentration_ng_per_ul).to('microliter/nanogram')
     return ul(math.ceil((mass_to_convert_ng * dna_concentration_ul_per_ng).magnitude))    
 

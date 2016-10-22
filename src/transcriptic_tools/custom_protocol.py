@@ -1126,8 +1126,14 @@ class CustomProtocol(Protocol):
             
         dest = convert_to_wellgroup(dest)
 
+       
+
         if type(volume) == list:
             min_volume = min(volume)
+            
+            if len(volume)>1 and len(dest)==1:
+                dest = WellGroup(list(dest.wells)*len(source))
+            
         else:
             min_volume = volume        
         
@@ -2486,7 +2492,7 @@ class CustomProtocol(Protocol):
     
         p.provision_by_name(antibiotic.reagent,wells,volumes, mix_after=mix_after, **mix_kwargs)    
     
-    def measure_bacterial_density(self,wells, ):
+    def measure_bacterial_density(self,wells):
             
         wells = convert_to_wellgroup(wells)
         
@@ -2512,19 +2518,29 @@ class CustomProtocol(Protocol):
             if self.next_absorbance_plate_index>=12:
                 raise Exception('code only knows how to run 12 absorbance calls, please update to increase this')
             
-            column_index = wells[0].index
+            if len(wells)>8:
+                raise Exception('measure density can only handle up to 8 wells')
             
-            if set(get_column_wells(source_container,column_index))!=set(wells):
-                raise Exception('Entire columns allowed only if transfer required for OD measurement')
-            
-            self.transfer_column(source_container, column_index, 
-                                self.absorbance_plate, 
-                                self.next_absorbance_plate_index,
-                                ul(100))
-            
-            wells = get_column_wells(self.absorbance_plate,
-                                     self.next_absorbance_plate_index)
-            
+            if len(wells)==8 and all([well.container == wells[0].container for well in wells]):
+                column_index = wells[0].index
+                
+                if set(get_column_wells(source_container,column_index))!=set(wells):
+                    raise Exception('Entire columns only allowed if transfer required for OD measurement')
+                
+                self.transfer_column(source_container, column_index, 
+                                    self.absorbance_plate, 
+                                    self.next_absorbance_plate_index,
+                                    ul(100))
+                
+                wells = get_column_wells(self.absorbance_plate,
+                                         self.next_absorbance_plate_index)
+                
+            else:
+                #individual wells
+                dest_wells = self.absorbance_plate.wells_from(self.next_absorbance_plate_index,len(wells), columnwise=True)
+                self.transfer(wells, dest_wells, ul(100))
+                wells = dest_wells
+                
             self.next_absorbance_plate_index+=1
             
         
@@ -2582,6 +2598,11 @@ class CustomProtocol(Protocol):
         sources = convert_to_wellgroup(sources)
         dests = convert_to_wellgroup(dests)
         
+        containers = set([source.container for source in sources])
+        for container in containers:
+            assert isinstance(container, Container)
+            if container.container_type.shortname not in ['96-deep']:
+                raise Exception('only able to miniprep from 96-deep')
     
         #source wells must have sufficient volume (1ml) although 1.8mL is recomended
         #it might be ideal to automatically move part of the sample over to a 96-deep and incubate if the volume is too low 
@@ -2863,6 +2884,7 @@ class CustomProtocol(Protocol):
         experiment_well = pcr_plate.well(0)        
         experiment_well.name = "linearized_%s"%vector_source_well.name
         
+        
         pcr_wells = [experiment_well]
         
         if negative_control:
@@ -2874,23 +2896,31 @@ class CustomProtocol(Protocol):
         # -------------------------------------------------------------
         # Restriction enzyme cutting vector
         # 2 experiments (1 without re)
-        # 50ul total reaction volume for cutting 1ug of DNA:
+        # 25ul total reaction volume for cutting 1ug of DNA:
         # yuL water
-        # 5ul CutSmart 10x
+        # 2.5ul CutSmart 10x
         # xul vector (1ug of DNA)
-        # 1ul of each enzyme 
-        # 1ul fastap (dephosphorylation)
+        # 0.5ul of each enzyme (10 units) 
+        # 1ul antarctic phosphatase (dephosphorylation)
+        #2.5uL 10x antarctic phosphatase buffer 
         
-        cutsmart_volume = ul(5)
-        enzyme_volume = ul(1)
+        total_volume = ul(25)
+        cutsmart_volume = ul(2.5)
+        enzyme_volume = ul(0.5) #10 units
         antarctic_phos_volume = ul(1) # 5 units
-        antarctic_phos_buffer_volume =  ul(5)
+        antarctic_phos_buffer_volume =  ul(2.5)
         vector_volume = convert_mass_to_volume(ug(1), vector_source_well)
-        water_volume = ul(50) - (2*enzyme_volume + vector_volume + cutsmart_volume + antarctic_phos_volume +\
+        water_volume = total_volume - (2*enzyme_volume + vector_volume + cutsmart_volume + antarctic_phos_volume +\
                                  antarctic_phos_buffer_volume)
         
-        self.provision_by_name(Reagent.water, pcr_wells, water_volume)
-        self.mix(vector_source_well)
+        if water_volume<ul(0) or total_volume/vector_volume>4:
+            raise Exception('vector concentration is too low, need at least 56ng/ul')
+        
+        
+        
+        if water_volume > ul(0):
+            self.provision_by_name(Reagent.water, pcr_wells, water_volume)
+            self.mix(vector_source_well)
         self.transfer(vector_source_well, pcr_wells, vector_volume, mix_after=True,
                       one_source=True, one_tip=True)
         self.provision_by_name(Reagent.cutsmart_buffer_10x, pcr_wells, cutsmart_volume)
@@ -2905,7 +2935,7 @@ class CustomProtocol(Protocol):
         self.provision_by_name(Reagent.antarctic_phosphatase_buffer_10x, experiment_well, antarctic_phos_buffer_volume)
         
         
-        assert all([well.volume == ul(50) for well in pcr_wells])
+        assert all([well.volume == total_volume for well in pcr_wells])
         
         self.mix(pcr_wells)
         
@@ -2923,4 +2953,10 @@ class CustomProtocol(Protocol):
             self.mix(pcr_wells)
             self.gel_separate(pcr_wells, ul(10), "agarose(10,2%)", 'ladder2', '15:minute', 'verify_linearization_gel')            
                 
+                
+        if vector_source_well.properties.get('Concentration (DNA)'):
+            source_concentration = Unit(vector_source_well.properties['Concentration (DNA)'])
+            dest_concentration = vector_volume / total_volume * source_concentration
+            set_property(experiment_well, 'Concentration (DNA)', dest_concentration )        
+
         return experiment_well
