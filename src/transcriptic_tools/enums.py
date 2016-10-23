@@ -61,6 +61,7 @@ class Reagent(CustomEnum):
     antarctic_phosphatase =  49
     antarctic_phosphatase_buffer_10x =  50
     nebuilder_master_mix = 51
+    m9_minimal_media = 52
     
     @property
     def is_dispensable(self):
@@ -76,7 +77,8 @@ DISPENSABLE_REAGENTS = {
     Reagent.dmem_fbs_ps: True,
     Reagent.lb_miller: True,
     Reagent.lb_amp: True,
-    Reagent.lb_kan: True
+    Reagent.lb_kan: True,
+    Reagent.m9_minimal_media: True
     #no longer available            
     #Reagent.tb_amp: True,
     #Reagent.tb_kan: True,

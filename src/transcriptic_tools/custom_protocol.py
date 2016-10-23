@@ -450,7 +450,7 @@ class CustomProtocol(Protocol):
         if not isinstance(volume, Unit):
             return False
                 
-        if volume.to('microliter').magnitude % 20 != 0:
+        if volume.to('microliter').magnitude % 5 != 0:
             return False       
         
         #not able to handle 6-flat
@@ -2940,7 +2940,7 @@ class CustomProtocol(Protocol):
         self.mix(pcr_wells)
         
         #enzyme only takes 15min but we want to leave time for dephosphorylation
-        self.incubate(pcr_plate, "warm_37", "30:minute", shaking=False)
+        self.incubate(pcr_plate, "warm_37", "60:minute", shaking=False)
         
         #inactivate RE's (see this site for thermal temps)
         #https://www.neb.com/tools-and-resources/usage-guidelines/heat-inactivation

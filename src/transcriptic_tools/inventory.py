@@ -32,6 +32,7 @@ def get_transcriptic_inventory():
         Reagent.antarctic_phosphatase_buffer_10x: 'rs17sh6bqyawz3',
         #doesn't exist anymore
         #Reagent.tb_amp: 'rs18xr22jq7vtz',
+        Reagent.m9_minimal_media: 'rs18tmbm3am3ab',
         
         Reagent.t4_ligase_kit_ligase_buffer_10x: 'rs17sh5rzz79ct',
         Reagent.t4_ligase_kit_ligase: 'rs16pc8krr6ag7',
