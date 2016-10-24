@@ -77,17 +77,15 @@ def pellet_bacteria(p, source_bacteria_well,
         p.consolidate(growth_wells,mix_well2,floor_volume(overnight_bacteria_volume / len(growth_wells)))
         
         #adding antibiotic mixes after by default
-        p.add_antibiotic(mix_well2, antibiotic, broth_volume=ul(1950)-overnight_bacteria_volume)
+        p.add_antibiotic(mix_well2, antibiotic, broth_volume=ul(1995)-overnight_bacteria_volume)
         
-        p.provision_by_name(Reagent.copycontrol_induction_solution, mix_well2, ul(1))
+        p.provision_by_name(Reagent.copycontrol_induction_solution, mix_well2, ul(2))
         
         p.distribute(mix_well2, induction_wells, floor_volume(get_volume(mix_well2,aspiratable=True) / len(induction_wells)), 
                      allow_carryover=True)
         
         p.cover(growth_plate)
         
-        #grow bacteria until they are in their log phase of growth
-        #https://www.qiagen.com/us/resources/technologies/plasmid-resource-center/growth%20of%20bacterial%20cultures/
         p.incubate(growth_plate, "warm_37", "{}:hour".format(5), shaking=True)
         
         p.uncover(growth_plate)
