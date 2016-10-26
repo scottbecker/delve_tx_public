@@ -13,7 +13,7 @@ Add TE to a tube with DNA, mix, measure concentration, and optionally split the 
 ###Create Water Container:
 Handy test protocol to mimick reagent containers in test mode by making a container with every well filled to max volume with water
 ###Anneal Oligos and Ligate to Vector
-Anneal two oligos together and then ligate to a linearized vector. Vector must have 'Concentration (DNA)' property like '4.0:nanograms/microliter'
+Anneal two oligos together and then ligate to a linearized vector. Vector must have 'Concentration (DNA)' property like '4.0:nanograms/microliter'. Includes the ability to optionally run a transform, spread, and pick afterwards (same protocol as the Transcriptic version).
 
 
 ## Running protocols from the command line (requires unix)
