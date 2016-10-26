@@ -462,7 +462,8 @@ def convert_mass_to_volume(mass_to_convert,dna_well):
     
     dna_concentration_ng_per_ul = Unit(dna_well.properties['Concentration (DNA)']).to('nanogram/microliter')
     dna_concentration_ul_per_ng = (1/dna_concentration_ng_per_ul).to('microliter/nanogram')
-    return ul(math.ceil((mass_to_convert_ng * dna_concentration_ul_per_ng).magnitude))    
+    #liquid handler has .01 ul precision
+    return ceil_volume(mass_to_convert_ng * dna_concentration_ul_per_ng,2)
 
 
 def convert_moles_to_volume(moles_to_convert,dna_well):

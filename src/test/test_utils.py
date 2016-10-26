@@ -173,7 +173,7 @@ class TestUtils(unittest.TestCase):
     
         self.assertEqual(utils.convert_moles_to_volume(utils.pmol(0.1), 
                                                        dna_well),
-                         ul(6))    
+                         ul(5.81))    
     
         
     def test_convert_stamp_shape_to_wells(self):

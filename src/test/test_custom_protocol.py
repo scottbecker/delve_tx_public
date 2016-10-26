@@ -40,8 +40,8 @@ class TestCustomProtocol(unittest.TestCase):
                 self.assertEqual(type(p.instructions[i-1]),Cover)
         
         #final protocol needs to be the same as the initial protocol
-        self.assertEqual(p.as_dict(),initial_protocol.as_dict())
-        self.assertDictEqual(p.as_dict(),
+        self.assertEqual(p.as_dict(seal_on_store=False),initial_protocol.as_dict(seal_on_store=False))
+        self.assertDictEqual(p.as_dict(seal_on_store=False),
                              {
                                  'refs': {
                                      'my_plate': {
@@ -156,7 +156,7 @@ class TestCustomProtocol(unittest.TestCase):
                 self.assertEqual(type(p.instructions[i-1]),Cover)
             
         #final protocol needs to be the same as the initial protocol
-        self.assertEqual(p.as_dict(),initial_protocol.as_dict())
+        self.assertEqual(p.as_dict(seal_on_store=False),initial_protocol.as_dict(seal_on_store=False))
         
         expected_result =  {
             'refs': {
@@ -235,7 +235,7 @@ class TestCustomProtocol(unittest.TestCase):
             }]
         }
         
-        self.assertDictEqual(p.as_dict(),expected_result
+        self.assertDictEqual(p.as_dict(seal_on_store=False),expected_result
                                                     
                     )    
     def test_culture_medium_large_provisioning(self):
@@ -264,10 +264,10 @@ class TestCustomProtocol(unittest.TestCase):
             if isinstance(instruction,Incubate):
                 self.assertEqual(type(p.instructions[i-1]),Cover)
     
-        protocol_dict = p.as_dict()    
+        protocol_dict = p.as_dict(seal_on_store=False)    
     
         #final protocol needs to be the same as the initial protocol
-        self.assertEqual(protocol_dict,initial_protocol.as_dict())
+        self.assertEqual(protocol_dict,initial_protocol.as_dict(seal_on_store=False))
         self.assertDictEqual({
             'object': 'culture_medium',
             'op': 'dispense',
@@ -318,7 +318,7 @@ class TestCustomProtocol(unittest.TestCase):
         self.assertEqual(p.instructions[0].data['resource_id'],
                          p.transcriptic_inv[Reagent.pbs])
     
-        protocol_dict = p.as_dict()    
+        protocol_dict = p.as_dict(seal_on_store=False)    
     
         #final protocol needs to be the same as the initial protocol
         self.assertDictEqual({
@@ -1012,7 +1012,7 @@ class TestCustomProtocol(unittest.TestCase):
         
         p._consolidate_last_pipette_operation()
         
-        self.assertListEqual(p.as_dict()['instructions'],
+        self.assertListEqual(p.as_dict(seal_on_store=False)['instructions'],
                              [{
                                  'groups': [{
                                      'transfer': [{
@@ -1082,7 +1082,7 @@ class TestCustomProtocol(unittest.TestCase):
                          mix_before=True
                          )
             
-            self.assertEqual(p.as_dict(),
+            self.assertEqual(p.as_dict(seal_on_store=False),
                              {
                                  'refs': {
                                      'my_plate2': {
@@ -1222,8 +1222,8 @@ class TestCustomProtocol(unittest.TestCase):
 
             
         #final protocol needs to be the same as the initial protocol
-        self.assertEqual(p.as_dict(),initial_protocol.as_dict())
-        self.assertDictEqual(p.as_dict(),
+        self.assertEqual(p.as_dict(seal_on_store=False),initial_protocol.as_dict(seal_on_store=False))
+        self.assertDictEqual(p.as_dict(seal_on_store=False),
                              {
                                  'refs': {
                                      'trypsin_edta': {
@@ -1419,7 +1419,16 @@ class TestCustomProtocol(unittest.TestCase):
     
         p.add_antibiotic(well, Antibiotic.amp)
     
-        self.assertEqual(well.volume, ul(615.7))       
+        self.assertEqual(well.volume, ul(615.7))    
+        
+        
+        well = plate.well(2)
+    
+        well.volume = ul(615)
+    
+        p.add_antibiotic(well, Antibiotic.strep)
+    
+        self.assertEqual(well.volume, ul(615.7))         
         
     def test_measure_bacterial_density(self):
         p = Protocol()

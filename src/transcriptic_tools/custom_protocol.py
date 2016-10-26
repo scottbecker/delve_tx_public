@@ -9,6 +9,7 @@ from autoprotocol.pipette_tools import depth, dispense_target
 from autoprotocol.container_type import _CONTAINER_TYPES
 from autoprotocol.protocol import (Protocol, Well, Container, is_valid_well,
                                    WellGroup, Uncover, Ref)
+from autoprotocol.instruction import Incubate
 from transcriptic_tools.utils import (ul, get_well_dead_volume,
                                       get_well_max_volume, assert_valid_volume, ml,
                                       space_available, get_well_safe_volume, ensure_list,
@@ -25,6 +26,7 @@ from instruction import MiniPrep
 from Bio.SeqUtils import GC
 from transcriptic_tools.inventory import get_transcriptic_inventory
 from autoprotocol.util import make_gel_extract_params, make_band_param
+
 
 
 MAX_PIPETTE_TIP_VOLUME = ul(900)
@@ -867,6 +869,34 @@ class CustomProtocol(Protocol):
             return None
         
         return well_volumes
+    
+    def store(self, container, condition):
+        """
+        Manually adjust the storage destiny for a container used within
+        this protocol.
+    
+        Parameters
+        ----------
+        container : Container
+            Container used within this protocol
+        condition : str
+            New storage destiny for the specified Container
+    
+        Raises
+        ------
+        TypeError
+            If container argument is not a Container object
+        RuntimeError
+            If the container passed is not already present in self.refs
+    
+        """    
+        
+        if isinstance(condition, Temperature):
+            condition = condition.name        
+    
+        super(CustomProtocol,self).store(container, condition)
+        
+        
        
     def ref(self, name, id=None, cont_type=None, storage=None, discard=None, cover=None,
             **properties):
@@ -1464,50 +1494,57 @@ class CustomProtocol(Protocol):
             
         self._assert_valid_transfer(source, dest)
             
-    def incubate(self, ref, where, duration, shaking=None, co2=None):
+    def incubate(self, ref, where, duration, shaking=None, co2=None,
+                 uncovered=False,
+                 human=False):
         """
-                Move plate to designated thermoisolater or ambient area for incubation
-                for specified duration.
+        Move plate to designated thermoisolater or ambient area for incubation
+        for specified duration.
+
+        Example Usage:
+
+        .. code-block:: python
+
+            p = Protocol()
+            sample_plate = p.ref("sample_plate",
+                                 None,
+                                 "96-pcr",
+                                 storage="warm_37")
+
+            # a plate must be sealed/covered before it can be incubated
+            p.seal(sample_plate)
+            p.incubate(sample_plate, "warm_37", "1:hour", shaking=True)
+
+        Autoprotocol Output:
+
+        .. code-block:: json
+
+            "instructions": [
+                {
+                  "object": "sample_plate",
+                  "op": "seal"
+                },
+                {
+                  "duration": "1:hour",
+                  "where": "warm_37",
+                  "object": "sample_plate",
+                  "shaking": true,
+                  "op": "incubate",
+                  "co2_percent": 0
+                }
+              ]
+
+        """
         
-                Example Usage:
+
+        if isinstance(where, Temperature):
+            where = where.name        
         
-                .. code-block:: python
-        
-                    p = Protocol()
-                    sample_plate = p.ref("sample_plate",
-                                         None,
-                                         "96-pcr",
-                                         storage="warm_37")
-        
-                    # a plate must be sealed/covered before it can be incubated
-                    p.seal(sample_plate)
-                    p.incubate(sample_plate, "warm_37", "1:hour", shaking=True)
-        
-                Autoprotocol Output:
-        
-                .. code-block:: json
-        
-                    "instructions": [
-                        {
-                          "object": "sample_plate",
-                          "op": "seal"
-                        },
-                        {
-                          "duration": "1:hour",
-                          "where": "warm_37",
-                          "object": "sample_plate",
-                          "shaking": true,
-                          "op": "incubate",
-                          "co2_percent": 5
-                        }
-                      ]
-        
-                """   
         if self.mammalian_cell_mode:
             if co2 == None:
                 co2 = 5
         else:
-            if shaking==None:
+            if Temperature.from_string(where) == Temperature.warm_37 and shaking==None:
                 shaking = True
         
         if not shaking:
@@ -1521,13 +1558,25 @@ class CustomProtocol(Protocol):
             return
         
 
-        if isinstance(where, Temperature):
-            where = where.name
 
         self._last_incubated = ref
         
-        super(CustomProtocol,self).incubate(ref,where,duration,shaking,co2)
+        super(CustomProtocol,self).incubate(ref,where,duration,shaking,co2,
+                                            uncovered)
         
+      
+        
+        if human:   
+            
+            last_instruction = self.instructions[-1]
+            
+            assert isinstance(last_instruction, Incubate)
+            
+            new_data = last_instruction.data
+            new_data.update({'x_human':True})
+            last_instruction.data = new_data
+            last_instruction.__dict__.update(new_data)
+            
         
     def _assert_safe_to_pipette_from(self, sources):
         sources = ensure_list(sources)
@@ -2026,7 +2075,7 @@ class CustomProtocol(Protocol):
         if self.parent_protocol:
             return self.parent_protocol._ref_for_container(container)
     
-    def as_dict(self, finalize=True):
+    def as_dict(self, finalize=True, seal_on_store=True):
         """
         Return the entire protocol as a dictionary.
     
@@ -2084,6 +2133,8 @@ class CustomProtocol(Protocol):
         """
         
         if finalize:
+            if seal_on_store:
+                self.seal_on_store()
             p = self._get_final_protocol()
             return p.as_dict(finalize=False)
         
@@ -2448,8 +2499,147 @@ class CustomProtocol(Protocol):
     #--------------- Bacterial Methods ----------
     #--------------------------------------------
     
+    def transform_spread_pick(self,source_wells,
+                      antibiotic,
+                      pick_count=2,
+                      minimum_picked_colonies=0,
+                      spread_volume=ul(100),
+                      negative_control=True,
+                      positive_control=True,
+                      second_antibiotic=None,
+                      liquid_growth_time='16:hour',
+                      solid_growth_time='16:hour'
+                      ):
+        
+        if not antibiotic:
+            raise Exception('antibiotic required')
+        
+        curr_time = datetime.datetime.now().strftime("%m_%d_%Y_%H_%M_%S")
+        
+        source_wells = convert_to_wellgroup(source_wells)
+    
+        assert isinstance(antibiotic, Antibiotic)
+    
+        original_source_well_count = len(source_wells)
+    
+        if positive_control:
+            if not antibiotic.positive_control_plasmid:
+                raise Exception('no positive control plasmid for %s'%antibiotic)
+    
+            pc_well = self.ref('pc_%s_plasmid'%antibiotic.name, cont_type='micro-1.5', 
+                               discard=True).well(0)
+    
+            pc_well.name = pc_well.container.name
+    
+            self.provision_by_name(antibiotic.positive_control_plasmid, pc_well, ul(22.6))
+    
+            source_wells.append(pc_well)
+    
+        if negative_control:
+            nc_well = self.ref('nc_water', cont_type='micro-1.5', 
+                               discard=True).well(0)
+            nc_well.name = nc_well.container.name
+    
+            self.provision_by_name(Reagent.water, nc_well, ul(22.6))
+    
+            source_wells.append(nc_well)
+    
+        if len(source_wells)>6:
+            raise Exception('we can only tranform 6 wells total at a time, including negative and positive controls')        
+        
+        #---------- transform --------------
+        
+        transf_plate  = self.ref('transf_plate', cont_type='96-pcr', discard=True)
+        deep_transf_plate = self.ref('deeptransf_plate', cont_type='96-deep', discard=True)
+        
+        self.incubate(transf_plate, Temperature.cold_20, '20:minute',
+                      human=True)
+        
+        transf_wells = transf_plate.wells_from(0,len(source_wells),columnwise=True)
+        
+        self.provision_by_name(Reagent.zymo_dh5a, transf_wells, ul(50))
+        
+        for i, source_well in enumerate(source_wells):
+            transf_wells[i].name = source_well.name
+        
+        self.transfer(source_wells, transf_wells, ul(2),mix_after=True)
+        
+        self.incubate(transf_plate, Temperature.cold_4, '20:minute')
+        
+        deep_transf_wells = deep_transf_plate.wells_from(0,len(source_wells),columnwise=True)
+        
+        for i, source_well in enumerate(source_wells):
+            deep_transf_wells[i].name = source_well.name   
+            
+            
+        self.provision_by_name(Reagent.soc_medium, deep_transf_wells, ul(400))
+        
+        self.transfer(transf_wells, deep_transf_wells, ul(40))
+        
+        self.incubate(deep_transf_plate, Temperature.warm_37, '50:minute', shaking=True)
+        
+        source_wells = deep_transf_wells
+        
+        # ------------ spread --------------
+        
+        
+        liquid_culture_plate = self.ref("liquid_culture_plate_%s" % curr_time, cont_type="96-flat", storage = "cold_4")
+        solid_culture_plate = self.create_agar_plate("colony_plate_%s" % curr_time, 
+                                                    '6-flat', 
+                                                    antibiotic=antibiotic, 
+                                                    discard=False, 
+                                                    storage=Temperature.cold_4)
+        
+        
+        solid_culture_plate_wells = solid_culture_plate.wells_from("A1", len(source_wells))
+    
+        for innoculant, dest in zip(source_wells, solid_culture_plate_wells):
+            dest.name = innoculant.name
+            self.spread(innoculant, dest, spread_volume)
+            
+        # ------------ pick --------------
+    
+        self.cover(solid_culture_plate)
+    
+        self.incubate(solid_culture_plate, Temperature.warm_37, solid_growth_time, shaking = False)
+    
+        media_volume = space_available(liquid_culture_plate.well(0)) - (ul(5) if second_antibiotic else ul(0))
+        
+        growth_wells = get_column_wells(liquid_culture_plate, range(original_source_well_count))
+
+        self.add_antibiotic(growth_wells, antibiotic, total_volume_to_add_including_broth=media_volume)
+        
+        if second_antibiotic:
+            self.add_antibiotic(growth_wells, second_antibiotic)
+
+        self.uncover(solid_culture_plate)
+        self.image_plate(solid_culture_plate, "top", dataref="culture_plate_image__%s" % curr_time)
+    
+    
+       
+        
+        #don't pick negative and positive control
+        
+        
+        count = 0
+        while count < original_source_well_count:
+            pick_wells = liquid_culture_plate.wells_from(count,pick_count,columnwise = True)
+            for i, pick_well in enumerate(pick_wells):
+                pick_well.name = solid_culture_plate.well(count).name+"_%s"%i
+            self.autopick(solid_culture_plate.well(count), pick_wells, 
+                          min_abort = minimum_picked_colonies, 
+                          dataref="autopick_%d" % count)
+            count += 1
+    
+        self.cover(solid_culture_plate)
+        self.cover(liquid_culture_plate)
+    
+        self.incubate(liquid_culture_plate,Temperature.warm_37, liquid_growth_time, shaking=True) 
+        
+        self.measure_bacterial_density(growth_wells)
+    
     def add_antibiotic(p,wellsorcontainer,antibiotic, broth_volume=None,
-                       mix_after=None,**mix_kwargs):
+                       mix_after=None,total_volume_to_add_including_broth=None,**mix_kwargs):
         """
     
         Ensures that all wells provided have the appropriate concentration of the given antibiotic.
@@ -2463,7 +2653,10 @@ class CustomProtocol(Protocol):
     
         
     
-        if broth_volume and antibiotic.broth:
+        if antibiotic.broth and (total_volume_to_add_including_broth or broth_volume):
+            
+            if total_volume_to_add_including_broth:
+                broth_volume = total_volume_to_add_including_broth
             
             #user didn't set a mix_after argument and reagents are pre-mixed
             if mix_after==None:
@@ -2479,17 +2672,36 @@ class CustomProtocol(Protocol):
     
         if broth_volume:
             p.provision_by_name(Reagent.lb_miller,wells,broth_volume)
-    
+        
+        def get_well_antibiotic_volume(well_volume):
+            reagent_concentration = 1.0/antibiotic.reagent_concentration.to('microgram/microliter')
+            effective_concentration = antibiotic.effective_concentration.to('microgram/microliter')
+            antibiotic_volume_to_add = ceil_volume(effective_concentration * well_volume.to('microliter') * reagent_concentration,1)            
+            return antibiotic_volume_to_add
+
+        
+        all_wells_same_volume = all([well.volume == wells[0].volume for well in wells])
+        
         volumes = []
+        broth_volumes = []
     
         for well in wells:
             #reagent_concentration is now in microliter/microgram
-            reagent_concentration = 1.0/antibiotic.reagent_concentration.to('microgram/microliter')
-            effective_concentration = antibiotic.effective_concentration.to('microgram/microliter')
-            antibiotic_volume_to_add = ceil_volume(effective_concentration * well.volume.to('microliter') * reagent_concentration,1)
-    
-            volumes.append(antibiotic_volume_to_add)
-    
+            
+            
+            if total_volume_to_add_including_broth:
+                antibiotic_volume = get_well_antibiotic_volume(total_volume_to_add_including_broth)
+                broth_volume = total_volume_to_add_including_broth - antibiotic_volume
+                broth_volumes.append(broth_volume)
+            else:
+                antibiotic_volume = get_well_antibiotic_volume(well.volume)
+            
+            volumes.append(antibiotic_volume)
+            
+            
+        if broth_volumes:
+            p.provision_by_name(Reagent.lb_miller,wells,broth_volumes)
+            
         p.provision_by_name(antibiotic.reagent,wells,volumes, mix_after=mix_after, **mix_kwargs)    
     
     def measure_bacterial_density(self,wells):
@@ -2551,7 +2763,10 @@ class CustomProtocol(Protocol):
         self.absorbance_measurement_count+=1
     
     
-    def create_agar_plate(self, name,container_type_name,antibiotic=None,discard=True,storage=None):
+    def create_agar_plate(self, name,container_type_name,antibiotic=None,discard=False,storage=None):
+        
+        if isinstance(storage,Temperature):
+            storage = storage.name
         
         plates = {'6-flat':
                   {Antibiotic.kan: "ki17rs7j799zc2",
@@ -2577,10 +2792,14 @@ class CustomProtocol(Protocol):
     
     def ref_kit_container(self, name, container_type_name, kit_id, discard=True, storage=None):
         kit_item = Container(None, self.container_type(container_type_name))
+        kit_item.storage = storage
         if storage:
             self.refs[name] = Ref(name, {"reserve": kit_id, "store": {"where": storage}}, kit_item)
         else:
             self.refs[name] = Ref(name, {"reserve": kit_id, "discard": discard}, kit_item)
+            
+        for well in kit_item.all_wells():
+            well.volume = ul(0)
         return kit_item    
     
     def miniprep(self, sources, dests):
@@ -2960,3 +3179,93 @@ class CustomProtocol(Protocol):
             set_property(experiment_well, 'Concentration (DNA)', dest_concentration )        
 
         return experiment_well
+    
+    
+    def seal_on_store(self):
+        '''
+        Implicitly adds seal/cover instructions to the end of a run for containers
+        that do not have a cover.   Cover type applied defaults first to
+        "seal" if its within the capabilities of the container type, otherwise
+        to "cover".
+    
+        Example Usage:
+    
+            .. code-block:: python
+    
+                def example_method(protocol, params):
+                cont = params['container']
+                p.transfer(cont.well("A1"), cont.well("A2"), "10:microliter")
+                p.seal(cont)
+                p.unseal(cont)
+                p.cover(cont)
+                p.uncover(cont)
+    
+        Autoprotocol Output:
+    
+            .. code-block:: json
+    
+                {
+                  "refs": {
+                    "plate": {
+                      "new": "96-pcr",
+                      "store": {
+                        "where": "ambient"
+                      }
+                    }
+                  },
+                  "instructions": [
+                    {
+                      "groups": [
+                        {
+                          "transfer": [
+                            {
+                              "volume": "10.0:microliter",
+                              "to": "plate/1",
+                              "from": "plate/0"
+                            }
+                          ]
+                        }
+                      ],
+                      "op": "pipette"
+                    },
+                    {
+                      "object": "plate",
+                      "type": "ultra-clear",
+                      "op": "seal"
+                    },
+                    {
+                      "object": "plate",
+                      "op": "unseal"
+                    },
+                    {
+                      "lid": "universal",
+                      "object": "plate",
+                      "op": "cover"
+                    },
+                    {
+                      "object": "plate",
+                      "op": "uncover"
+                    },
+                    {
+                      "type": "ultra-clear",
+                      "object": "plate",
+                      "op": "seal"
+                    }
+                  ]
+                }
+    
+        '''
+        for name, ref in self.refs.items():
+            if "store" in ref.opts.keys():
+                if not (ref.container.is_covered() or ref.container.is_sealed()):
+                    if "seal" in ref.container.container_type.capabilities:
+                        self.seal(ref.container,
+                                      ref.container.container_type.seal_types[0])
+                    elif "cover" in ref.container.container_type.capabilities:
+                        self.cover(ref.container,
+                                       ref.container.container_type.cover_types[0])
+                    else:
+                        continue    
+                    
+                    
+        

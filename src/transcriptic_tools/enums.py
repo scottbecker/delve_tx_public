@@ -62,6 +62,19 @@ class Reagent(CustomEnum):
     antarctic_phosphatase_buffer_10x =  50
     nebuilder_master_mix = 51
     m9_minimal_media = 52
+    pUC19_1ug_per_ul = 53 #1ug/ul
+    pUC19_100pg_per_ul = 55
+    pHSG298_500ng_per_ul = 54 #0.5ug/ul
+    pHSG298_100pg_per_ul = 56
+    
+    #antibiotic positive control plasmids (aliases)
+    kan_resistant_plasmid = 55
+    amp_resistant_plasmid = 56
+
+    
+    zymo_dh5a = 57
+    soc_medium = 58
+    
     
     @property
     def is_dispensable(self):
@@ -78,7 +91,8 @@ DISPENSABLE_REAGENTS = {
     Reagent.lb_miller: True,
     Reagent.lb_amp: True,
     Reagent.lb_kan: True,
-    Reagent.m9_minimal_media: True
+    Reagent.m9_minimal_media: True,
+    Reagent.soc_medium: True
     #no longer available            
     #Reagent.tb_amp: True,
     #Reagent.tb_kan: True,
@@ -106,10 +120,13 @@ class Antibiotic(CustomEnum):
     def reagent_concentration(self):
         return ANTIBIOTIC_REAGENT_CONCeNTRATIONS[self]    
     
-
     @property
     def broth(self):
         return Reagent.from_string('lb_%s'%self.name)
+    
+    @property
+    def positive_control_plasmid(self):
+        return Reagent.from_string('%s_resistant_plasmid'%self.name)    
     
     @property
     def reagent(self):

@@ -16,7 +16,7 @@ def get_transcriptic_inventory():
         Reagent.pbs: 'rs194na2u3hfam',
         Reagent.te: 'rs17pwyc754v9t',
         Reagent.water       : 'rs17gmh5wafm5p', # catalog; Autoclaved MilliQ H2O; ambient
-        'dh5a'        : 'rs16pbj944fnny', # catalog; Zymo DH5a; cold_80
+        Reagent.zymo_dh5a        : 'rs16pbj944fnny', # catalog; Zymo DH5a; cold_80
         'gibson_mix'  : 'rs16pfatkggmk5', # catalog; Gibson Mix (2X); cold_20
         Reagent.nebuilder_master_mix: 'rs18pc86ykcep6', # catalog; NEBuilder MasterMix
         Reagent.lb_miller   : 'rs17bafcbmyrmh', # catalog; LB Broth Miller; cold_4
@@ -33,7 +33,8 @@ def get_transcriptic_inventory():
         #doesn't exist anymore
         #Reagent.tb_amp: 'rs18xr22jq7vtz',
         Reagent.m9_minimal_media: 'rs18tmbm3am3ab',
-        
+        Reagent.soc_medium: 'rs17tpdy56hfar',
+
         Reagent.t4_ligase_kit_ligase_buffer_10x: 'rs17sh5rzz79ct',
         Reagent.t4_ligase_kit_ligase: 'rs16pc8krr6ag7',
         Reagent.nebuffer_2_1_10x: 'rs17sh6krrzjqu',
@@ -44,11 +45,14 @@ def get_transcriptic_inventory():
         Reagent.cutsmart_buffer_10x: 'rs17ta93g3y85t',
         Reagent.hindiii: 'rs18nw6kpnp44v',
         Reagent.sali: 'rs18nw6kpnp44v',
-        Reagent.t4_polynucleotide_kinase:'rs16pc9rd5hsf6',
+        Reagent.t4_polynucleotide_kinase:'rs16pc9rd5hsf6', #thermo
         Reagent.t4_polynucleotide_kinase_buffer_a_10x:'rs16pc9rd5sg5d',
         Reagent.atp_100mM: 'rs16pccshb6cb4',
         
-        'puc19'       : 'rs17tcqmncjfsh', # catalog; pUC19; cold_20            
+        Reagent.pUC19_1ug_per_ul       : 'rs17tcqmncjfsh', # catalog; pUC19; cold_20    
+        Reagent.pHSG298_500ng_per_ul     : 'rs18rx5pyh6fku',
+        Reagent.pUC19_100pg_per_ul: 'rs18rx59spw2t8',
+        Reagent.pHSG298_100pg_per_ul: 'rs18rx6a44qss7',
         Reagent.iptg          : 'rs18vwgfgxq597', # catalog: 100mM
         'm13_f'                       : 'rs17tcpqwqcaxe', # catalog; M13 Forward (-41); cold_20 (1ul = 100pmol)
         'm13_r'                       : 'rs17tcph6e2qzh', # catalog; M13 Reverse (-48); cold_20 (1ul = 100pmol)
