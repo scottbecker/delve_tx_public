@@ -12,8 +12,14 @@ api.analyze_only = True
 
 
 info = api.analyze_run(protocol_json,
-            test_mode=len(sys.argv)==3 and sys.argv[2]=='--test',
+            test_mode='--test' in sys.argv,
             bsl=1)
+
+
+if '--verbose' in sys.argv:
+    print(json.dumps(info, indent=4))
+    sys.exit()
+
 
 
 instructions = [item for item in info['quote']['breakdown']['children'] if item['name']=='Instructions'][0]['children']

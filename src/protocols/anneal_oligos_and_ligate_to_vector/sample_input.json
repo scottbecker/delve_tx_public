@@ -10,45 +10,45 @@
                                 "properties": {}
                             }
                         }, 
-                        "type": "96-pcr", 
-                        "id": "ct19jy97hn6vn9", 
-                        "store": "cold_4"
+                        "type": "micro-2.0", 
+                        "id": "ct19gkzvxxk5ku", 
+                        "store": "cold_80"
                     }, 
                     "oligo2_tube": {
                         "cover": null, 
                         "label": "oligo2_tube", 
                         "aliquots": {
                             "0": {
-                                "volume": "250.0:microliter", 
+                                "volume": "100.0:microliter", 
                                 "name": null, 
                                 "properties": {}
                             }
                         }, 
-                        "type": "micro-1.5", 
-                        "id": "ct19jqn994xzjn", 
-                        "store": "cold_20"
+                        "type": "micro-2.0", 
+                        "id": "ct19gm27ck5yt9", 
+                        "store": "cold_4"
                     }, 
                     "oligo1_tube": {
                         "cover": null, 
                         "label": "oligo1_tube", 
                         "aliquots": {
                             "0": {
-                                "volume": "250.0:microliter", 
+                                "volume": "100.0:microliter", 
                                 "name": null, 
                                 "properties": {}
                             }
                         }, 
-                        "type": "micro-1.5", 
-                        "id": "ct19jqn994kzkb", 
+                        "type": "micro-2.0", 
+                        "id": "ct19gm27cjdvrk", 
                         "store": "cold_4"
                     }
                 }, 
                 "parameters": {
-                    "test_mode": false, 
+                    "test_mode": true, 
                     "oligo2_tube": "oligo2_tube", 
                     "negative_control": true, 
                     "linearized_vector_tube": "linearized_vector_tube", 
-                    "antibiotic": "kan", 
+                    "antibiotic": "amp", 
                     "transform_spread_pick": true, 
                     "oligo1_tube": "oligo1_tube"
                 }
