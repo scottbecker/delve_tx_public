@@ -19,7 +19,7 @@ from transcriptic_tools.utils import (ul, get_well_dead_volume,
                                       breakup_dispense_column_volumes, get_column_wells,
                                       set_property, ceil_volume, init_inventory_well,
                                       touchdown_pcr, convert_stamp_shape_to_wells,
-                                      convert_mass_to_volume, ug)
+                                      convert_mass_to_volume, ug, round_volume)
 from lib import lists_intersect, get_dict_optional_value, get_melting_temp
 from transcriptic_tools.enums import Reagent, Antibiotic, Temperature
 from instruction import MiniPrep
@@ -1587,6 +1587,12 @@ class CustomProtocol(Protocol):
         
     def _assert_valid_add_volume(self, dests):
         dests = ensure_list(dests)
+        
+        #fix the dest volumes to not have more than 0.01 precision
+        
+        for dest in dests:
+            dest.volume = round_volume(dest.volume, 2)
+        
         if not all([well.volume <= get_well_max_volume(well) for well in dests]):
             raise Exception('Too much liquid added to dests: %s'%dests)            
 
@@ -2513,7 +2519,9 @@ class CustomProtocol(Protocol):
                       pre_spread_function=None,
                       skip_pick=False,
                       force_include_soc=False,
-                      soc_medium_volume=ul(400)
+                      soc_medium_volume=ul(400),
+                      bacteria_type_or_well=Reagent.zymo_dh5a,
+                      transform_volume=ul(2)
                       ):
         """
         
@@ -2545,15 +2553,24 @@ class CustomProtocol(Protocol):
             Include the SOC recovery period even if its not necessary
         soc_medium_volume: volume, optional
             how much soc volume to add
+        bacteria_type_or_well: Reagents or well, optional
+            Reagent or well for the chemically competent bacteria 
+        transform_volume: volume, optional
+            How much volume to use from the source well for transformation
             
         """
         
         if not antibiotic:
             raise Exception('antibiotic required')
         
+        if not isinstance(bacteria_type_or_well, Reagent):
+            force_include_soc = True
+        
         curr_time = datetime.datetime.now().strftime("%m_%d_%Y_%H_%M_%S")
         
         source_wells = convert_to_wellgroup(source_wells)
+        
+        assert all([source_well.name for source_well in source_wells]), "all transformation source wells must have a name"
     
         assert isinstance(antibiotic, Antibiotic)
     
@@ -2596,7 +2613,10 @@ class CustomProtocol(Protocol):
         
         transf_wells = transf_plate.wells_from(0,len(source_wells),columnwise=True)
         
-        self.provision_by_name(Reagent.zymo_dh5a, transf_wells, ul(50))
+        if isinstance(bacteria_type_or_well, Reagent):
+            self.provision_by_name(bacteria_type_or_well, transf_wells, ul(50))
+        else:
+            self.transfer(bacteria_type_or_well, transf_wells, ul(50))
         
         for i, source_well in enumerate(source_wells):
             transf_wells[i].name = source_well.name
