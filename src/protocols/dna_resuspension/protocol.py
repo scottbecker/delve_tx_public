@@ -14,7 +14,8 @@ def main(p, params):
     
     dna_tube = params["dna_tube"]
     
-    assert isinstance(dna_tube,Container)
+    if params.get('send_to_80C',False):
+        assert isinstance(dna_tube,Container)
     
     dna_tube.set_storage(Temperature.cold_80.name)
     
