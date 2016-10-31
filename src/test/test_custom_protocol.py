@@ -15,7 +15,7 @@ class TestCustomProtocol(unittest.TestCase):
     
     def test_culture_medium_provisioning(self):
         
-        initial_protocol = Protocol()
+        initial_protocol = Protocol(mammalian_cell_mode=True)
         
         plate = initial_protocol.ref("my_plate", cont_type="24-deep", 
                                      storage="cold_4", discard=False)
@@ -125,7 +125,7 @@ class TestCustomProtocol(unittest.TestCase):
         
     def test_culture_medium_provisioning_filled_dest(self):
             
-        initial_protocol = Protocol()
+        initial_protocol = Protocol(mammalian_cell_mode=True)
             
         plate = initial_protocol.ref("my_plate", cont_type="24-deep", 
                                      storage="cold_4", discard=False)
@@ -1204,7 +1204,7 @@ class TestCustomProtocol(unittest.TestCase):
 
     def test_provision_by_name_transcriptic_reagent_warming(self):
         
-        initial_protocol = Protocol()
+        initial_protocol = Protocol(mammalian_cell_mode=True)
         
         plate = initial_protocol.ref("my_plate", cont_type="24-deep", 
                                      storage="cold_4", discard=False)

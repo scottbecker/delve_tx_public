@@ -9,37 +9,9 @@
                     "description": "", 
                     "label": "Volume in Microliters per well"
                 }, 
-                "storage_conditions": {
-                    "default": "cold_80", 
-                    "label": "Container Storage", 
-                    "type": "choice", 
-                    "options": [
-                        {
-                            "name": "cold_80", 
-                            "value": "cold_80"
-                        }, 
-                        {
-                            "name": "cold_20", 
-                            "value": "cold_20"
-                        }, 
-                        {
-                            "name": "cold_4", 
-                            "value": "cold_4"
-                        }, 
-                        {
-                            "name": "ambient", 
-                            "value": "ambient"
-                        }, 
-                        {
-                            "name": "warm_37", 
-                            "value": "warm_37"
-                        }
-                    ], 
-                    "description": ""
-                }, 
                 "container_type": {
                     "default": "micro-2.0", 
-                    "label": "Container Type", 
+                    "description": "Type of container", 
                     "type": "choice", 
                     "options": [
                         {
@@ -67,7 +39,35 @@
                             "value": "96-flat"
                         }
                     ], 
-                    "description": "Type of container"
+                    "label": "Container Type"
+                }, 
+                "storage_conditions": {
+                    "default": "cold_80", 
+                    "description": "", 
+                    "type": "choice", 
+                    "options": [
+                        {
+                            "name": "cold_80", 
+                            "value": "cold_80"
+                        }, 
+                        {
+                            "name": "cold_20", 
+                            "value": "cold_20"
+                        }, 
+                        {
+                            "name": "cold_4", 
+                            "value": "cold_4"
+                        }, 
+                        {
+                            "name": "ambient", 
+                            "value": "ambient"
+                        }, 
+                        {
+                            "name": "warm_37", 
+                            "value": "warm_37"
+                        }
+                    ], 
+                    "label": "Container Storage"
                 }, 
                 "container_name": {
                     "default": "new_container", 
@@ -76,28 +76,28 @@
                     "label": "Container Name"
                 }
             }, 
-            "description": "Handy test protocol to mimick reagent containers in test mode by making a container with every well filled to max volume with water", 
-            "version": "1.1.108", 
+            "name": "CreateWaterContainer", 
+            "version": "1.1.109", 
             "command_string": "python -m protocols.create_water_container.protocol", 
             "preview": {
                 "refs": {}, 
                 "parameters": {
                     "volume_ul": 200, 
-                    "storage_conditions": "cold_4", 
                     "container_type": "96-deep", 
+                    "storage_conditions": "cold_4", 
                     "container_name": "my container"
                 }
             }, 
-            "name": "CreateWaterContainer"
+            "description": "Handy test protocol to mimick reagent containers in test mode by making a container with every well filled to max volume with water"
         }, 
         {
             "inputs": {
-                "split_tubes": {
+                "measure_concentration": {
                     "default": false, 
-                    "required": false, 
+                    "required": true, 
                     "type": "bool", 
-                    "description": "used for making a working tube to avoid extra freeze/thaw", 
-                    "label": "Split Tube in half into a 2nd tube (4C)?"
+                    "description": "", 
+                    "label": "Measure DNA concentration with 2uL of solution?"
                 }, 
                 "test_mode": {
                     "default": true, 
@@ -116,16 +116,16 @@
                     "type": "integer", 
                     "label": "TE Volume (uL)"
                 }, 
-                "measure_concentration": {
+                "split_tubes": {
                     "default": false, 
-                    "required": true, 
+                    "required": false, 
                     "type": "bool", 
-                    "description": "", 
-                    "label": "Measure DNA concentration with 2uL of solution?"
+                    "description": "used for making a working tube to avoid extra freeze/thaw", 
+                    "label": "Split Tube in half into a 2nd tube (4C)?"
                 }
             }, 
-            "description": "Add TE to a tube with DNA, mix, measure concentration, and optionally split the tube (-80C) into a 4C storage working stock", 
-            "version": "1.1.118", 
+            "name": "DNAResuspension", 
+            "version": "1.1.119", 
             "command_string": "python -m protocols.dna_resuspension.protocol", 
             "preview": {
                 "refs": {
@@ -145,36 +145,19 @@
                     }
                 }, 
                 "parameters": {
-                    "split_tubes": true, 
+                    "measure_concentration": true, 
                     "test_mode": true, 
                     "dna_tube": "dna_tube", 
                     "resuspension_volume_uL": 500, 
-                    "measure_concentration": true
+                    "split_tubes": true
                 }
             }, 
-            "name": "DNAResuspension"
+            "description": "Add TE to a tube with DNA, mix, measure concentration, and optionally split the tube (-80C) into a 4C storage working stock"
         }, 
         {
             "inputs": {
-                "destroy_source_tube": {
-                    "default": false, 
-                    "required": true, 
-                    "type": "bool", 
-                    "description": "Destroy the source tube after using", 
-                    "label": "Destroy Source Tube?"
-                }, 
-                "test_mode": {
-                    "default": true, 
-                    "required": true, 
-                    "type": "bool", 
-                    "description": "Set this to checked if this is a test run", 
-                    "label": "Is this a test run?"
-                }, 
                 "antibiotic": {
                     "default": "cell_line", 
-                    "label": "Container Type", 
-                    "type": "choice", 
-                    "description": "Which antibiotic to use", 
                     "options": [
                         {
                             "name": "cell line defined", 
@@ -188,15 +171,56 @@
                             "name": "kanamycin", 
                             "value": "kan"
                         }
-                    ]
+                    ], 
+                    "type": "choice", 
+                    "description": "Which antibiotic to use", 
+                    "label": "Container Type"
+                }, 
+                "test_mode": {
+                    "default": true, 
+                    "required": true, 
+                    "type": "bool", 
+                    "description": "Set this to checked if this is a test run", 
+                    "label": "Is this a test run?"
+                }, 
+                "second_antibiotic": {
+                    "default": "None", 
+                    "options": [
+                        {
+                            "name": "None", 
+                            "value": "None"
+                        }, 
+                        {
+                            "name": "Streptomycin", 
+                            "value": "strep"
+                        }, 
+                        {
+                            "name": "ampicillin", 
+                            "value": "amp"
+                        }, 
+                        {
+                            "name": "kanamycin", 
+                            "value": "kan"
+                        }
+                    ], 
+                    "type": "choice", 
+                    "description": "Add a 2nd antibiotic", 
+                    "label": "Container Type"
                 }, 
                 "bacteria_well": {
                     "required": true, 
                     "type": "aliquot"
+                }, 
+                "destroy_source_tube": {
+                    "default": false, 
+                    "required": true, 
+                    "type": "bool", 
+                    "description": "Destroy the source tube after using", 
+                    "label": "Destroy Source Tube?"
                 }
             }, 
             "name": "BacteriaFreezing", 
-            "version": "1.0.50", 
+            "version": "1.0.51", 
             "command_string": "python -m protocols.bacteria_freezing.protocol", 
             "additional_previews": [
                 {
@@ -217,10 +241,11 @@
                         }
                     }, 
                     "parameters": {
-                        "destroy_source_tube": true, 
-                        "test_mode": true, 
                         "antibiotic": "cell_line", 
-                        "bacteria_well": "bacteria_tube/0"
+                        "test_mode": true, 
+                        "second_antibiotic": "strep", 
+                        "bacteria_well": "bacteria_tube/0", 
+                        "destroy_source_tube": true
                     }
                 }
             ], 
@@ -242,10 +267,11 @@
                     }
                 }, 
                 "parameters": {
-                    "destroy_source_tube": false, 
-                    "test_mode": true, 
                     "antibiotic": "cell_line", 
-                    "bacteria_well": "bacteria_tube/0"
+                    "test_mode": true, 
+                    "second_antibiotic": "None", 
+                    "bacteria_well": "bacteria_tube/0", 
+                    "destroy_source_tube": false
                 }
             }, 
             "description": "Take bacteria from a well, amplify it, freeze 10 tubes w/ 115ul each of it. Requires tubes to have a property cell_line_name with the name of the bacteria cell line."
@@ -259,25 +285,8 @@
                     "description": "Needed for BAC plasmids. Requires EPI300 cells", 
                     "label": "Induce high copy number?"
                 }, 
-                "destroy_source_tube": {
-                    "default": false, 
-                    "required": true, 
-                    "type": "bool", 
-                    "description": "Destroy the source tube after using", 
-                    "label": "Destroy Source Tube?"
-                }, 
-                "test_mode": {
-                    "default": true, 
-                    "required": true, 
-                    "type": "bool", 
-                    "description": "Set this to checked if this is a test run", 
-                    "label": "Is this a test run?"
-                }, 
                 "antibiotic": {
                     "default": "cell_line", 
-                    "label": "Container Type", 
-                    "type": "choice", 
-                    "description": "Which antibiotic to use", 
                     "options": [
                         {
                             "name": "cell line defined", 
@@ -291,7 +300,24 @@
                             "name": "kanamycin", 
                             "value": "kan"
                         }
-                    ]
+                    ], 
+                    "type": "choice", 
+                    "description": "Which antibiotic to use", 
+                    "label": "Container Type"
+                }, 
+                "test_mode": {
+                    "default": true, 
+                    "required": true, 
+                    "type": "bool", 
+                    "description": "Set this to checked if this is a test run", 
+                    "label": "Is this a test run?"
+                }, 
+                "destroy_source_tube": {
+                    "default": false, 
+                    "required": true, 
+                    "type": "bool", 
+                    "description": "Destroy the source tube after using", 
+                    "label": "Destroy Source Tube?"
                 }, 
                 "bacteria_well": {
                     "required": true, 
@@ -299,7 +325,7 @@
                 }
             }, 
             "name": "BacteriaPelleting", 
-            "version": "1.0.20", 
+            "version": "1.0.21", 
             "command_string": "python -m protocols.bacteria_pelleting.protocol", 
             "additional_previews": [
                 {
@@ -321,9 +347,9 @@
                     }, 
                     "parameters": {
                         "induce_high_copy_number": true, 
-                        "destroy_source_tube": true, 
-                        "test_mode": true, 
                         "antibiotic": "cell_line", 
+                        "test_mode": true, 
+                        "destroy_source_tube": true, 
                         "bacteria_well": "bacteria_tube/0"
                     }
                 }
@@ -347,9 +373,9 @@
                 }, 
                 "parameters": {
                     "induce_high_copy_number": false, 
-                    "destroy_source_tube": false, 
-                    "test_mode": true, 
                     "antibiotic": "cell_line", 
+                    "test_mode": true, 
+                    "destroy_source_tube": false, 
                     "bacteria_well": "bacteria_tube/0"
                 }
             }, 
@@ -364,25 +390,10 @@
                     "description": "Set this to checked if this is a test run", 
                     "label": "Is this a test run?"
                 }, 
-                "antibiotic": {
-                    "default": "N/A", 
-                    "label": "Container Type", 
-                    "type": "choice", 
-                    "description": "Which antibiotic to use", 
-                    "options": [
-                        {
-                            "name": "N/A", 
-                            "value": "N/A"
-                        }, 
-                        {
-                            "name": "ampicillin", 
-                            "value": "amp"
-                        }, 
-                        {
-                            "name": "kanamycin", 
-                            "value": "kan"
-                        }
-                    ]
+                "oligo2_tube": {
+                    "required": true, 
+                    "type": "container", 
+                    "label": "Tube with 100uM Oligo2"
                 }, 
                 "negative_control": {
                     "default": true, 
@@ -396,10 +407,25 @@
                     "type": "container", 
                     "label": "Tube with linearized vector"
                 }, 
-                "oligo2_tube": {
-                    "required": true, 
-                    "type": "container", 
-                    "label": "Tube with 100uM Oligo2"
+                "antibiotic": {
+                    "default": "N/A", 
+                    "options": [
+                        {
+                            "name": "N/A", 
+                            "value": "N/A"
+                        }, 
+                        {
+                            "name": "ampicillin", 
+                            "value": "amp"
+                        }, 
+                        {
+                            "name": "kanamycin", 
+                            "value": "kan"
+                        }
+                    ], 
+                    "type": "choice", 
+                    "description": "Which antibiotic to use", 
+                    "label": "Container Type"
                 }, 
                 "transform_spread_pick": {
                     "default": false, 
@@ -415,7 +441,7 @@
                 }
             }, 
             "description": "Anneal two oligos together and then ligate to a linearized vector. Vector must have 'Concentration (DNA)' property like '4.0:nanograms/microliter'", 
-            "version": "1.0.40", 
+            "version": "1.0.41", 
             "command_string": "python -m protocols.anneal_oligos_and_ligate_to_vector.protocol", 
             "additional_previews": [
                 {
@@ -465,10 +491,10 @@
                     }, 
                     "parameters": {
                         "test_mode": true, 
-                        "antibiotic": "amp", 
+                        "oligo2_tube": "oligo2_tube", 
                         "negative_control": false, 
                         "linearized_vector_tube": "linearized_vector_tube", 
-                        "oligo2_tube": "oligo2_tube", 
+                        "antibiotic": "amp", 
                         "transform_spread_pick": true, 
                         "oligo1_tube": "oligo1_tube"
                     }
@@ -521,10 +547,10 @@
                 }, 
                 "parameters": {
                     "test_mode": true, 
-                    "antibiotic": "kan", 
+                    "oligo2_tube": "oligo2_tube", 
                     "negative_control": true, 
                     "linearized_vector_tube": "linearized_vector_tube", 
-                    "oligo2_tube": "oligo2_tube", 
+                    "antibiotic": "kan", 
                     "transform_spread_pick": true, 
                     "oligo1_tube": "oligo1_tube"
                 }

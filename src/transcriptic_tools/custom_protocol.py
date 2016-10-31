@@ -34,7 +34,7 @@ MAX_PIPETTE_TIP_VOLUME = ul(900)
 class CustomProtocol(Protocol):
    
     def __init__(self,parent_protocol=None,
-                 mammalian_cell_mode=True):
+                 mammalian_cell_mode=False):
         #catalog inventory
         self.transcriptic_inv = get_transcriptic_inventory()
         
