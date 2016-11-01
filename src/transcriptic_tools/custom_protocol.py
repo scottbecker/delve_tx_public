@@ -19,7 +19,7 @@ from transcriptic_tools.utils import (ul, get_well_dead_volume,
                                       breakup_dispense_column_volumes, get_column_wells,
                                       set_property, ceil_volume, init_inventory_well,
                                       touchdown_pcr, convert_stamp_shape_to_wells,
-                                      convert_mass_to_volume, ug, round_volume)
+                                      convert_mass_to_volume, ug)
 from lib import lists_intersect, get_dict_optional_value, get_melting_temp
 from transcriptic_tools.enums import Reagent, Antibiotic, Temperature
 from instruction import MiniPrep
@@ -34,7 +34,7 @@ MAX_PIPETTE_TIP_VOLUME = ul(900)
 class CustomProtocol(Protocol):
    
     def __init__(self,parent_protocol=None,
-                 mammalian_cell_mode=False):
+                 mammalian_cell_mode=True):
         #catalog inventory
         self.transcriptic_inv = get_transcriptic_inventory()
         
@@ -1496,8 +1496,7 @@ class CustomProtocol(Protocol):
             
     def incubate(self, ref, where, duration, shaking=None, co2=None,
                  uncovered=False,
-                 human=False,
-                 measure_bacterial_density=False):
+                 human=False):
         """
         Move plate to designated thermoisolater or ambient area for incubation
         for specified duration.
@@ -1562,7 +1561,6 @@ class CustomProtocol(Protocol):
 
         self._last_incubated = ref
         
-        
         super(CustomProtocol,self).incubate(ref,where,duration,shaking,co2,
                                             uncovered)
         
@@ -1587,12 +1585,6 @@ class CustomProtocol(Protocol):
         
     def _assert_valid_add_volume(self, dests):
         dests = ensure_list(dests)
-        
-        #fix the dest volumes to not have more than 0.01 precision
-        
-        for dest in dests:
-            dest.volume = round_volume(dest.volume, 2)
-        
         if not all([well.volume <= get_well_max_volume(well) for well in dests]):
             raise Exception('Too much liquid added to dests: %s'%dests)            
 
@@ -2511,70 +2503,22 @@ class CustomProtocol(Protocol):
                       antibiotic,
                       pick_count=2,
                       minimum_picked_colonies=0,
+                      spread_volume=ul(100),
                       negative_control=True,
                       positive_control=True,
                       second_antibiotic=None,
-                      liquid_growth_time='16:hour',
-                      solid_growth_time='16:hour',
-                      pre_spread_function=None,
-                      skip_pick=False,
-                      force_include_soc=False,
-                      soc_medium_volume=ul(400),
-                      bacteria_type_or_well=Reagent.zymo_dh5a,
-                      transform_volume=ul(2)
+                      liquid_growth_time='16:hours',
+                      solid_growth_time='16:hours'
                       ):
-        """
-        
-        Parameters
-        ----------
-        source_wells : Well, WellGroup, [Well], or Container
-            welsl containing bacteria
-        antibiotic : Antibiotic
-            The main antibiotic to use
-        minimum_picked_colonies : int, optional
-            Minimum number of colonies per well
-        negative_control : bool, optional
-            Include a negative control well for transformation (water)
-        positive_control : bool, optional
-            Inlcude a positive control plasmid
-        second_antibiotic: Antibiotic, optional
-            A second antibiotic to add
-        liquid_growth_time: str, optional
-            How long to incubate in liquid media after picking
-        solid_growth_time: str, optional
-            How long to incubate in solid agar
-        pre_spread_function: function, optional
-            A method that will be called before spreading.
-            Function Args: protocol, source wells, last_incubate_instruction_index
-            It must return the wells that should be used for spreading and the last incubate instruction index (used of time constraints) 
-        skip_pick: bool, optional
-            Skip the final pick step and just take a picture of the colonies
-        force_include_soc: bool, optional
-            Include the SOC recovery period even if its not necessary
-        soc_medium_volume: volume, optional
-            how much soc volume to add
-        bacteria_type_or_well: Reagents or well, optional
-            Reagent or well for the chemically competent bacteria 
-        transform_volume: volume, optional
-            How much volume to use from the source well for transformation
-            
-        """
         
         if not antibiotic:
             raise Exception('antibiotic required')
         
-        if not isinstance(bacteria_type_or_well, Reagent):
-            force_include_soc = True
-        
         curr_time = datetime.datetime.now().strftime("%m_%d_%Y_%H_%M_%S")
         
         source_wells = convert_to_wellgroup(source_wells)
-        
-        assert all([source_well.name for source_well in source_wells]), "all transformation source wells must have a name"
     
         assert isinstance(antibiotic, Antibiotic)
-    
-        original_source_well_count = len(source_wells)
     
         if positive_control:
             if not antibiotic.positive_control_plasmid:
@@ -2587,12 +2531,14 @@ class CustomProtocol(Protocol):
     
             self.provision_by_name(antibiotic.positive_control_plasmid, pc_well, ul(22.6))
     
+    
+    
             source_wells.append(pc_well)
     
         if negative_control:
             nc_well = self.ref('nc_water', cont_type='micro-1.5', 
                                discard=True).well(0)
-            nc_well.name = nc_well.container.name
+            pc_well.name = nc_well.container.name
     
             self.provision_by_name(Reagent.water, nc_well, ul(22.6))
     
@@ -2604,81 +2550,35 @@ class CustomProtocol(Protocol):
         #---------- transform --------------
         
         transf_plate  = self.ref('transf_plate', cont_type='96-pcr', discard=True)
-        
+        deep_transf_plate = self.ref('deeptransf_plate', cont_type='96-deep', discard=True)
         
         self.incubate(transf_plate, Temperature.cold_20, '20:minute',
                       human=True)
         
-        pre_cool_instruction_index = self.get_instruction_index()
-        
         transf_wells = transf_plate.wells_from(0,len(source_wells),columnwise=True)
         
-        if isinstance(bacteria_type_or_well, Reagent):
-            self.provision_by_name(bacteria_type_or_well, transf_wells, ul(50))
-        else:
-            self.transfer(bacteria_type_or_well, transf_wells, ul(50))
+        self.provision_by_name(Reagent.zymo_dh5a, transf_wells, ul(50))
         
         for i, source_well in enumerate(source_wells):
-            transf_wells[i].name = source_well.name
+            transf_wells[i].name = source_wells[i].name
         
-        self.transfer(source_wells, transf_wells, ul(2),mix_after=True,
-                      #gently
-                      mix_seconds = 3
-                      )
-        
-        cell_mixing_instruction_index = self.get_instruction_index()
-            
+        self.transfer(source_wells, transf_wells, ul(2),mix_after=True)
         
         self.incubate(transf_plate, Temperature.cold_4, '20:minute')
-        ice_cells_instruction_index = self.get_instruction_index()
         
-        #ice the cells immediately
-        self.add_time_constraint({"mark": cell_mixing_instruction_index, "state": "end"},
-                                 {"mark": ice_cells_instruction_index, "state": "start"},
-                                 '30:second')           
+        deep_transf_wells = deep_transf_plate.wells_from(0,len(source_wells),columnwise=True)
         
-        #don't allow the mix plate to heat up
-        self.add_time_constraint({"mark": pre_cool_instruction_index, "state": "end"},
-                                 {"mark": ice_cells_instruction_index, "state": "start"},
-                                 '5:minute')         
+        for i, source_well in enumerate(source_wells):
+            deep_transf_wells[i].name = source_wells[i].name   
+            
+            
+        self.provision_by_name(Reagent.soc_medium, deep_transf_wells, ul(400))
         
+        self.transfer(transf_wells, deep_transf_wells, ul(40))
         
-        if antibiotic!=Antibiotic.amp or force_include_soc:
-            
-            deep_transf_plate = self.ref('deeptransf_plate', cont_type='96-deep', discard=True)
-            
-            deep_transf_wells = deep_transf_plate.wells_from(0,len(source_wells),columnwise=True)
-            
-            for i, source_well in enumerate(source_wells):
-                deep_transf_wells[i].name = source_well.name   
-            
-            self.provision_by_name(Reagent.soc_medium, deep_transf_wells, soc_medium_volume)
-            
-            self.transfer(transf_wells, deep_transf_wells, ul(40))
-            
-            self.incubate(deep_transf_plate, Temperature.warm_37, '60:minute', shaking=True)
-            last_cell_incubate_instruction_index = self.get_instruction_index()
-            
-            #don't allow the cells to wait in an ice cold container too long
-            self.add_time_constraint({"mark": ice_cells_instruction_index, "state": "end"},
-                                     {"mark": last_cell_incubate_instruction_index, "state": "start"},
-                                     '3:minute')                      
-            
-            source_wells = deep_transf_wells
-            spread_volume = ul(100)
+        self.incubate(deep_transf_plate, Temperature.warm_37, '50:minute', shaking=True)
         
-        else:
-            source_wells = transf_wells
-            spread_volume = min(get_volume(source_wells[0],aspiratable=True),ul(100))
-            last_cell_incubate_instruction_index = ice_cells_instruction_index
-            
-            
-        if pre_spread_function:
-            source_wells,last_cell_incubate_instruction_index = pre_spread_function(self, source_wells,
-                                                                                    last_cell_incubate_instruction_index)
-            
-        if second_antibiotic:
-            self.add_antibiotic(source_wells, second_antibiotic)          
+        source_wells = deep_transf_wells
         
         # ------------ spread --------------
         
@@ -2691,58 +2591,37 @@ class CustomProtocol(Protocol):
                                                     discard=False, 
                                                     storage=Temperature.cold_4)
         
-        #pre-warm the solid culture plate
-        self.incubate(solid_culture_plate, Temperature.warm_37, '5:minute', shaking=False)
-        pre_warm_instruction_index = self.get_instruction_index()
-        
         
         solid_culture_plate_wells = solid_culture_plate.wells_from("A1", len(source_wells))
     
         for innoculant, dest in zip(source_wells, solid_culture_plate_wells):
             dest.name = innoculant.name
             self.spread(innoculant, dest, spread_volume)
-            
-            spread_instruction_index = self.get_instruction_index()
-            
-            #don't allow the agar plate to cool down
-            self.add_time_constraint({"mark": pre_warm_instruction_index, "state": "end"},
-                                     {"mark": spread_instruction_index, "state": "start"},
-                                     '3:minute')
-            
-            #don't allow the cells to wait in ambient temp too long
-            self.add_time_constraint({"mark": last_cell_incubate_instruction_index, "state": "end"},
-                                     {"mark": spread_instruction_index, "state": "start"},
-                                     '3:minute')                 
-            
+    
         self.cover(solid_culture_plate)
     
-        self.incubate(solid_culture_plate, Temperature.warm_37, solid_growth_time, shaking = False)        
-     
-        self.image_plate(solid_culture_plate, "top", dataref="culture_plate_image__%s" % curr_time)
-             
-        # ------------ pick --------------
+        self.incubate(solid_culture_plate, Temperature.warm_37, solid_growth_time, shaking = False)
     
-        if skip_pick:
-            return
-
-        
-        
         media_volume = space_available(liquid_culture_plate.well(0)) - (ul(5) if second_antibiotic else ul(0))
         
-        growth_wells = get_column_wells(liquid_culture_plate, range(original_source_well_count))
-
+        growth_wells = get_column_wells(liquid_culture_plate, range(len(source_wells)))
+        
         self.add_antibiotic(growth_wells, antibiotic, total_volume_to_add_including_broth=media_volume)
         
         if second_antibiotic:
             self.add_antibiotic(growth_wells, second_antibiotic)
-     
+
         self.uncover(solid_culture_plate)
-        #don't pick negative and positive control (use original_source_well_count)
+        self.image_plate(solid_culture_plate, "top", dataref="culture_plate_image__%s" % curr_time)
+    
+    
+        # ------------ pick --------------
+    
         count = 0
-        while count < original_source_well_count:
+        while count < len(source_wells):
             pick_wells = liquid_culture_plate.wells_from(count,pick_count,columnwise = True)
-            for i, pick_well in enumerate(pick_wells):
-                pick_well.name = solid_culture_plate.well(count).name+"_%s"%i
+            for pick_well in pick_wells:
+                pick_well.name = solid_culture_plate.well(count).name
             self.autopick(solid_culture_plate.well(count), pick_wells, 
                           min_abort = minimum_picked_colonies, 
                           dataref="autopick_%d" % count)
@@ -2885,13 +2764,15 @@ class CustomProtocol(Protocol):
         if isinstance(storage,Temperature):
             storage = storage.name
         
-        plates = {'6-flat':
-                  {Antibiotic.kan: "ki17rs7j799zc2",
+        plates = {'6-flat':{
+                      Antibiotic.kan: "ki17rs7j799zc2",
                       Antibiotic.amp: "ki17sbb845ssx9",
                       Antibiotic.spc: "ki17sbb9r7jf98",
                       Antibiotic.cam: "ki17urn3gg8tmj",
-                      None: "ki17reefwqq3sq"},
-                  '1-flat':{Antibiotic.kan: "ki17t8j7kkzc4g",
+                      None: "ki17reefwqq3sq"
+                      },
+                  '1-flat':{
+                      Antibiotic.kan: "ki17t8j7kkzc4g",
                       Antibiotic.amp: "ki17t8jcebshtr",
                       Antibiotic.spc: "ki17t8jaa96pw3",
                       Antibiotic.cam: "ki17urn592xejq",

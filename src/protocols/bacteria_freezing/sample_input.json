@@ -19,7 +19,6 @@
                     "destroy_source_tube": false, 
                     "test_mode": true, 
                     "antibiotic": "cell_line", 
-                    "second_antibiotic": "None", 
                     "bacteria_well": "hme63/0"
                 }
             }
