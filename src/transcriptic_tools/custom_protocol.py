@@ -1238,18 +1238,20 @@ class CustomProtocol(Protocol):
             
             #needed to calculate proper mixing speed
             future_dest_well = Well(None, 0)
-            future_dest_well.volume = ul(0)
+            future_dest_well.volume = dests[0].volume
             
-            #we use the first destination to determine mix volume
+            #we use the first destination to determine mix after volume
             
-            last_dest = None
-            for well, volume in zip(dests,volume):
-                if last_dest and last_dest != well:
-                    break
-                if not last_dest:
-                    future_dest_well.volume+=well.volume
-                
-                future_dest_well.volume += volume
+            pseudo_dests = dests
+            
+            if len(dests) == 1 and len(volume)>1:
+                pseudo_dests = list(dests)*len(volume)
+            
+            #only consider one destination
+            pseudo_dests = [(dest_well,xfer_volume) for dest_well, xfer_volume in zip(pseudo_dests,volume) if dest_well==dests[0]]
+            
+            for well, xfer_volume in pseudo_dests:
+                future_dest_well.volume += xfer_volume
                 
             mix_kwargs.update(self._get_mix_args(future_dest_well, kwargs_format=True,
                                                  mix_after=allow_different_mix_options,
