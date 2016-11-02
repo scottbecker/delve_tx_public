@@ -8,6 +8,7 @@ from transcriptic_tools.enums import Antibiotic, Reagent
 
 def amplify_and_freeze_bacteria(p, source_bacteria_well,
                                 antibiotic=None,
+                                second_antibiotic=None,
                                 destroy_source_tube=False):
     
     cell_line_name = get_cell_line_name(source_bacteria_well)
@@ -24,6 +25,8 @@ def amplify_and_freeze_bacteria(p, source_bacteria_well,
     
     assert isinstance(antibiotic,Antibiotic)
     
+    assert antibiotic!=second_antibiotic, "can't add the same antibiotic twice"
+    
     # Tubes and plates
     growth_plate = p.ref('growth_plate', cont_type="96-flat", discard=True)
     growth_wells = growth_plate.wells(['A1','A2'])
@@ -35,6 +38,9 @@ def amplify_and_freeze_bacteria(p, source_bacteria_well,
     
     #adding antibiotic mixes after by default
     p.add_antibiotic(mix_well, antibiotic, broth_volume=ul(650))
+    
+    if second_antibiotic:
+        p.add_antibiotic(mix_well, second_antibiotic)
     
     p.distribute(mix_well, growth_wells, ul(325), allow_carryover=True)
     
@@ -87,6 +93,7 @@ def main(p, params):
     
     amplify_and_freeze_bacteria(p, params['bacteria_well'],
                                 Antibiotic.from_string(params['antibiotic']) if params['antibiotic'] != 'cell_line' else None,
+                                Antibiotic.from_string(params['second_antibiotic']) if params['second_antibiotic'] != 'cell_line' else None,
                                 params['destroy_source_tube']
                                 )
     

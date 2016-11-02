@@ -35,6 +35,10 @@ def anneal_oligos_and_ligate_to_vector(p, oligo1_tube, oligo2_tube,
     p.provision_by_name(Reagent.water, atp_25mM_well, ul(6))
     p.provision_by_name(Reagent.atp_100mM, atp_25mM_well, ul(2))        
     
+    oligo_wells = [oligo1_tube.well(0),oligo2_tube.well(0)]
+    
+    assert all([well.properties.get('Concentration')=='100uM' for well in oligo_wells]), 'All oligos must be at 100uM'
+    
     #------------- Anneal / Phosphorylation ----------------------------
     
     #prep annealing, 20uL total
@@ -45,7 +49,7 @@ def anneal_oligos_and_ligate_to_vector(p, oligo1_tube, oligo2_tube,
     p.provision_by_name(Reagent.t4_polynucleotide_kinase, anneal_well, ul(1))
     #atp hasn't been mixed yet
     p.transfer(atp_25mM_well, anneal_well, ul(1), mix_before=True, mix_after=True)
-    p.transfer([oligo1_tube.well(0),oligo2_tube.well(0)], anneal_well, ul(1),
+    p.transfer(oligo_wells, anneal_well, ul(1),
                mix_after=True)
     
     
