@@ -263,7 +263,8 @@ class CustomProtocol(Protocol):
             ul(xfer['volume']) >= ul(10):
                 del xfer['mix_after']  
         
-    def transfer_column(self,source_plate,source_column_index,dest_plate,dest_column_index,volume):
+    def transfer_column(self,source_plate,source_column_index,dest_plate,dest_column_index,volume,
+                        mix_before=True):
         
         assert isinstance(source_plate,Container)
         
@@ -273,7 +274,7 @@ class CustomProtocol(Protocol):
                 get_column_wells(dest_plate,dest_column_index)[0],
                 volume,
                 shape={'rows':num_rows,'columns':1},
-                mix_before=True)        
+                mix_before=mix_before)        
         
     def transfer_all_volume_evenly(self,sources,dests,**mix_kwargs):
         """
@@ -2934,11 +2935,11 @@ class CustomProtocol(Protocol):
         sources = convert_to_wellgroup(sources)
         dests = convert_to_wellgroup(dests)
         
-        containers = set([source.container for source in sources])
-        for container in containers:
-            assert isinstance(container, Container)
-            if container.container_type.shortname not in ['96-deep']:
-                raise Exception('only able to miniprep from 96-deep')
+        #containers = set([source.container for source in sources])
+        #for container in containers:
+            #assert isinstance(container, Container)
+            #if container.container_type.shortname not in ['96-deep']:
+                #raise Exception('only able to miniprep from 96-deep')
     
         #source wells must have sufficient volume (1ml) although 1.8mL is recomended
         #it might be ideal to automatically move part of the sample over to a 96-deep and incubate if the volume is too low 
