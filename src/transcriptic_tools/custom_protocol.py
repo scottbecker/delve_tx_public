@@ -1950,7 +1950,8 @@ class CustomProtocol(Protocol):
                 
             
                 
-    def image_plate(self, ref, mode, dataref):
+    def image_plate(self, ref, mode, dataref,
+                    remove_cover=True):
         """
         Cover and Capture an image of the specified container.
     
@@ -2019,8 +2020,15 @@ class CustomProtocol(Protocol):
     
         """
         
-        self.cover(ref)
+        had_cover = ref.cover
+        
+        if had_cover and remove_cover:
+            self.uncover(ref)
+            
         super(CustomProtocol,self).image_plate(ref, mode, dataref)
+        
+        if had_cover and remove_cover:
+            self.cover(ref)
         
     def assert_valid_state(self):
         for n, ref in self.refs.items():
