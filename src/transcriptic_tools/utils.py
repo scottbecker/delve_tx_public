@@ -178,8 +178,10 @@ def init_inventory_well(well, headers=TSC_HEADERS, org_name=ORG_NAME,container_j
         return
     
     well_data = well_data[0]
-    well.name = "{}".format(container["label"], well_data['name']) if well_data['name'] is not None else container["label"]
+    well.name = "{}".format(well_data['name']) if well_data['name'] is not None else container["label"]
     well.properties = well_data['properties']
+    if well_data.get('resource'):
+        well.properties['Resource'] = well_data['resource']['name']
     well.volume = Unit(well_data['volume_ul'], 'microliter')
 
     if 'ERROR' in well.properties:
@@ -275,7 +277,13 @@ def get_well_safe_volume(wellorcontainer):
     assert_non_negative_well(well)
     return well.container.container_type.safe_min_volume_ul.to('microliter')
 
-def get_well_max_volume(wellorcontainer):
+def get_well_max_volume(wellorcontainer, mammalian_cell_mode=False):
+    """
+    
+    Get the max volume of a set of wells.  If mammalian_cell_mode=False, we don't allow more than 100uL in 
+    6-flat plates to prevent adding too much volume
+    
+    """
     
     if isinstance(wellorcontainer,Container):
         well = wellorcontainer.well(0)
@@ -283,7 +291,11 @@ def get_well_max_volume(wellorcontainer):
         well = wellorcontainer    
     
     assert_non_negative_well(well)
-    return well.container.container_type.well_volume_ul.to('microliter')
+    
+    if well.container.container_type.shortname == '6-flat':
+        return ul(100)
+    else:
+        return well.container.container_type.well_volume_ul.to('microliter')
 
 def space_available(well, first_well_index=0):
     """
@@ -352,6 +364,12 @@ def ml(milliliters):
 def pmol(picomoles):
     """Unicode function name for creating picomoles"""
     return Unit(picomoles,"picomole")  
+
+def uM(micromolar):
+    return Unit(micromolar,"micromolar")
+
+def mM(millimolar):
+    return Unit(millimolar,'millimolar')
 
 def ensure_list(potential_item_or_items):
     try:
@@ -617,6 +635,13 @@ def convert_stamp_shape_to_wells(source_origin, dest_origin, shape=dict(rows=8,
         all_dest_wells += dest_wells    
         
     return all_source_wells, all_dest_wells
+
+def calculate_dilution_volume(start_concentration, final_concentration, final_volume):
+
+    start_volume = final_concentration * final_volume / start_concentration
+    
+    return start_volume.to('microliter') 
+    
 
 
 class InvalidContainerStateException(Exception):

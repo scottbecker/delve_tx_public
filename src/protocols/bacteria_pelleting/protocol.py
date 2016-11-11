@@ -83,12 +83,8 @@ def pellet_bacteria(p, source_bacteria_well,
         
         p.distribute(mix_well2, induction_wells, floor_volume(get_volume(mix_well2,aspiratable=True) / len(induction_wells)), 
                      allow_carryover=True)
-        
-        p.cover(growth_plate)
-        
+
         p.incubate(growth_plate, "warm_37", "{}:hour".format(5), shaking=True)
-        
-        p.uncover(growth_plate)
         
         p.measure_bacterial_density(induction_wells)
         

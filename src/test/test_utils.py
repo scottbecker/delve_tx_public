@@ -192,3 +192,8 @@ class TestUtils(unittest.TestCase):
         
         
         
+    def test_calculate_dilution_volume(self):
+        
+        self.assertEqual(utils.calculate_dilution_volume(utils.mM(100), 
+                                                        utils.uM(500), 
+                                                        ul(440)), ul(2.2))

@@ -19,7 +19,8 @@ from transcriptic_tools.utils import (ul, get_well_dead_volume,
                                       breakup_dispense_column_volumes, get_column_wells,
                                       set_property, ceil_volume, init_inventory_well,
                                       touchdown_pcr, convert_stamp_shape_to_wells,
-                                      convert_mass_to_volume, ug, round_volume)
+                                      convert_mass_to_volume, ug, round_volume,
+                                      calculate_dilution_volume, mM, uM)
 from lib import lists_intersect, get_dict_optional_value, get_melting_temp
 from transcriptic_tools.enums import Reagent, Antibiotic, Temperature
 from instruction import MiniPrep
@@ -1013,7 +1014,7 @@ class CustomProtocol(Protocol):
         return ref
     
     
-    def transfer(self, source, dest, volume, one_source=False, one_tip=True, 
+    def transfer(self, source, dest, volume, one_source=False, one_tip=False, 
                 aspirate_speed=None, dispense_speed=None, 
                 aspirate_source=None, dispense_target=None, 
                 pre_buffer=None, disposal_vol=None, 
@@ -1499,8 +1500,7 @@ class CustomProtocol(Protocol):
             
     def incubate(self, ref, where, duration, shaking=None, co2=None,
                  uncovered=False,
-                 human=False,
-                 measure_bacterial_density=False):
+                 human=False):
         """
         Move plate to designated thermoisolater or ambient area for incubation
         for specified duration.
@@ -1550,6 +1550,9 @@ class CustomProtocol(Protocol):
         else:
             if Temperature.from_string(where) == Temperature.warm_37 and shaking==None:
                 shaking = True
+                
+            if co2==None:
+                co2=0
         
         if not shaking:
             shaking=False
@@ -1596,7 +1599,7 @@ class CustomProtocol(Protocol):
         for dest in dests:
             dest.volume = round_volume(dest.volume, 2)
         
-        if not all([well.volume <= get_well_max_volume(well) for well in dests]):
+        if not all([well.volume <= get_well_max_volume(well, mammalian_cell_mode=self.mammalian_cell_mode) for well in dests]):
             raise Exception('Too much liquid added to dests: %s'%dests)            
 
     def _assert_valid_transfer(self, sources, dests):
@@ -1948,9 +1951,66 @@ class CustomProtocol(Protocol):
                 
             self._assert_valid_transfer(sources, dest)
                 
-            
+    def spread(self, source, dest, volume):
+        """
+        Spread the specified volume of the source aliquot across the surface of
+        the agar contained in the object container
+
+        Example Usage:
+
+        .. code-block:: python
+
+            p = Protocol()
+
+            agar_plate = p.ref("agar_plate", None, "1-flat", discard=True)
+            bact = p.ref("bacteria", None, "micro-1.5", discard=True)
+
+            p.spread(bact.well(0), agar_plate.well(0), "55:microliter")
+
+
+        Autoprotocol Output:
+
+        .. code-block:: json
+
+            {
+              "refs": {
+                "bacteria": {
+                  "new": "micro-1.5",
+                  "discard": true
+                },
+                "agar_plate": {
+                  "new": "1-flat",
+                  "discard": true
+                }
+              },
+              "instructions": [
+                {
+                  "volume": "55.0:microliter",
+                  "to": "agar_plate/0",
+                  "from": "bacteria/0",
+                  "op": "spread"
+                }
+              ]
+            }
+
+
+        Parameters
+        ----------
+        source : Well
+            Source of material to spread on agar
+        dest : Well
+            Reference to destination location (plate containing agar)
+        volume : str, Unit
+            Volume of source material to spread on agar
+
+        """    
+        
+        super(CustomProtocol,self).spread(source, dest, volume)
+        
+        self._assert_valid_transfer(source, dest)
+        
                 
-    def image_plate(self, ref, mode, dataref,
+    def image_plate(self, ref, mode='top', dataref='plate_image',
                     remove_cover=True):
         """
         Cover and Capture an image of the specified container.
@@ -2528,6 +2588,8 @@ class CustomProtocol(Protocol):
                       liquid_growth_time='16:hour',
                       solid_growth_time='16:hour',
                       pre_spread_function=None,
+                      pre_soc_incubate_function=None,
+                      add_iptg=False,
                       skip_pick=False,
                       force_include_soc=False,
                       soc_medium_volume=ul(400),
@@ -2558,6 +2620,12 @@ class CustomProtocol(Protocol):
             A method that will be called before spreading.
             Function Args: protocol, source wells, last_incubate_instruction_index
             It must return the wells that should be used for spreading and the last incubate instruction index (used of time constraints) 
+        pre_soc_incubate_function: function, optional
+            A method that will be called before incubating transformants in SOC medium
+            Function Args: the protocol instance, a list of SOC wells
+            Return: a list of wells that should be used for spreading
+        add_iptg: bool, optional
+            Whether to add 500uM iptg to the SOC medium. Used for clonesure plasmids
         skip_pick: bool, optional
             Skip the final pick step and just take a picture of the colonies
         force_include_soc: bool, optional
@@ -2568,6 +2636,7 @@ class CustomProtocol(Protocol):
             Reagent or well for the chemically competent bacteria 
         transform_volume: volume, optional
             How much volume to use from the source well for transformation
+        
             
         """
         
@@ -2575,6 +2644,9 @@ class CustomProtocol(Protocol):
             raise Exception('antibiotic required')
         
         if not isinstance(bacteria_type_or_well, Reagent):
+            force_include_soc = True
+        
+        if add_iptg:
             force_include_soc = True
         
         curr_time = datetime.datetime.now().strftime("%m_%d_%Y_%H_%M_%S")
@@ -2665,7 +2737,22 @@ class CustomProtocol(Protocol):
             
             self.provision_by_name(Reagent.soc_medium, deep_transf_wells, soc_medium_volume)
             
-            self.transfer(transf_wells, deep_transf_wells, ul(40))
+            transf_well_volume = ul(40)
+            
+            self.transfer(transf_wells, deep_transf_wells, transf_well_volume)
+            
+            if add_iptg:
+                iptg_wells = deep_transf_wells[0:original_source_well_count]
+                
+                iptg_volume = calculate_dilution_volume(mM(100), 
+                                                       uM(500), 
+                                                       soc_medium_volume+transf_well_volume)
+                
+                self.provision_by_name(Reagent.iptg, iptg_wells, iptg_volume, mix_after=True)
+                
+            
+            if pre_soc_incubate_function:
+                deep_transf_wells = pre_soc_incubate_function(self, deep_transf_wells)
             
             self.incubate(deep_transf_plate, Temperature.warm_37, '60:minute', shaking=True)
             last_cell_incubate_instruction_index = self.get_instruction_index()
@@ -2735,17 +2822,26 @@ class CustomProtocol(Protocol):
     
         if skip_pick:
             return
-
-        
         
         media_volume = space_available(liquid_culture_plate.well(0)) - (ul(5) if second_antibiotic else ul(0))
         
         growth_wells = get_column_wells(liquid_culture_plate, range(original_source_well_count))
-
+        
         self.add_antibiotic(growth_wells, antibiotic, total_volume_to_add_including_broth=media_volume)
+        set_property(growth_wells,'antibiotic',antibiotic.name)
         
         if second_antibiotic:
             self.add_antibiotic(growth_wells, second_antibiotic)
+     
+     
+        if add_iptg:
+           
+            iptg_volume = calculate_dilution_volume(mM(100), 
+                                                   uM(500), 
+                                                   growth_wells[0].volume)
+            
+            self.provision_by_name(Reagent.iptg, growth_wells, iptg_volume, mix_after=True)        
+     
      
         self.uncover(solid_culture_plate)
         #don't pick negative and positive control (use original_source_well_count)
@@ -2832,7 +2928,7 @@ class CustomProtocol(Protocol):
             
         p.provision_by_name(antibiotic.reagent,wells,volumes, mix_after=mix_after, **mix_kwargs)    
     
-    def measure_bacterial_density(self,wells):
+    def measure_bacterial_density(self,wells,name_postfix=""):
             
         wells = convert_to_wellgroup(wells)
         
@@ -2886,7 +2982,7 @@ class CustomProtocol(Protocol):
         
         self.absorbance(wells[0].container, wells.indices(),
                         wavelength="600:nanometer",
-                        dataref='cell_density_600nm_absorbance_%s'%self.absorbance_measurement_count, flashes=25)    
+                        dataref='cell_density_600nm_absorbance_%s%s'%(self.absorbance_measurement_count,name_postfix), flashes=25)    
         
         self.absorbance_measurement_count+=1
     
@@ -2994,7 +3090,7 @@ class CustomProtocol(Protocol):
         
         #use the following calculator to calc Tm for primers - http://tmcalculator.neb.com/#!/ (w/ 500nM primer)
         
-        Assumes primer well concentration is 10uM
+        Primer well concentration must be 10uM and have a Concentration property with this value
         
         Bands in the negative control indicate that there was contamination in the primers'
         
@@ -3005,18 +3101,9 @@ class CustomProtocol(Protocol):
         if product_length>20*1000:
             raise Exception('Q5 polymerase is not appropriate for PCR products more than 20kb')
         
+        oligo_wells = [primer1_well,primer2_well]
         
-        #annealing_temp = min(primer1_tm_c, primer2_tm_c) + 1
-        
-        #if max(primer1_tm_c, primer2_tm_c)>72:
-            #raise Exception('primer melting temps are far too high, aim for between 55-60')
-        
-        
-        #determine if we need GC enhancer
-        
-        #dilute primers to 10uM
-        
-       
+        assert all([well.properties.get('Concentration')=='10uM' for well in oligo_wells]), 'All oligos must be at 10uM'
         
         # Temporary tubes for use, then discarded (you can't set storage if you are going to discard)
         mastermix_well = self.ref("mastermix", cont_type="micro-1.5", discard=True).well(0)

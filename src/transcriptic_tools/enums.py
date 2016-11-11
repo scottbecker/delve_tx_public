@@ -68,8 +68,8 @@ class Reagent(CustomEnum):
     pHSG298_100pg_per_ul = 56
     
     #antibiotic positive control plasmids (aliases)
-    kan_resistant_plasmid = 55
-    amp_resistant_plasmid = 56
+    kan_resistant_plasmid = 56
+    amp_resistant_plasmid = 55
 
     
     zymo_dh5a = 57
