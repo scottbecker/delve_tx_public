@@ -378,6 +378,48 @@ def ensure_list(potential_item_or_items):
         return [potential_item_or_items]
     return list(potential_item_or_items)
 
+def set_name(wellsorcontainer,new_name):
+    if isinstance(wellsorcontainer, Container):
+        wellsorcontainer.name = new_name
+        return
+    
+    wells = convert_to_wellgroup(wellsorcontainer)
+    
+    for well in wells:
+        well.name = new_name
+        
+    return
+
+def copy_well_names(source_wells_or_container, dest_wells_or_container, pre_fix='',
+                    post_fix=''):
+    """
+    Copy the name from a source container or list of wells to another container or list of wells.
+    If the wells don't have names, their human readable well name will be used
+    """
+    source_wells = convert_to_wellgroup(source_wells_or_container)
+    dest_wells = convert_to_wellgroup(dest_wells_or_container)
+
+
+    #distribute
+    if len(source_wells)==1 and len(dest_wells)>1:
+        source_wells = list(source_wells)*len(dest_wells)
+    
+    #consolidate    
+    elif len(dest_wells)==1 and len(source_wells)>1:
+        dest_wells = list(dest_wells)*len(source_wells)
+
+    else:
+        assert len(source_wells)==len(dest_wells), 'source and dest wells must be the same cardinality'
+        
+    for source_well, dest_well in zip(source_wells,dest_wells):
+        
+        source_well_name = source_well.name if source_well.name else source_well.humanize()
+        
+        dest_well.name = "%s%s%s"%(pre_fix, source_well_name, post_fix)
+    
+
+
+
 def convert_to_wellgroup(entity):
     if isinstance(entity,Container):
         wells = entity.all_wells()
@@ -393,7 +435,8 @@ def convert_to_wellgroup(entity):
             wells += convert_to_wellgroup(item)
             
     elif isinstance(entity,WellGroup):
-        wells = entity
+        #clone the entity to allow us to edit in in functions
+        wells = WellGroup(list(entity))
     elif isinstance(entity,Well):
         wells = WellGroup([entity])
     else:
@@ -642,6 +685,7 @@ def calculate_dilution_volume(start_concentration, final_concentration, final_vo
     
     return start_volume.to('microliter') 
     
+
 
 
 class InvalidContainerStateException(Exception):

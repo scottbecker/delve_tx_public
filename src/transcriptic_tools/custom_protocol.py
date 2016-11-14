@@ -20,7 +20,7 @@ from transcriptic_tools.utils import (ul, get_well_dead_volume,
                                       set_property, ceil_volume, init_inventory_well,
                                       touchdown_pcr, convert_stamp_shape_to_wells,
                                       convert_mass_to_volume, ug, round_volume,
-                                      calculate_dilution_volume, mM, uM)
+                                      calculate_dilution_volume, mM, uM, copy_well_names)
 from lib import lists_intersect, get_dict_optional_value, get_melting_temp
 from transcriptic_tools.enums import Reagent, Antibiotic, Temperature
 from instruction import MiniPrep
@@ -265,17 +265,27 @@ class CustomProtocol(Protocol):
                 del xfer['mix_after']  
         
     def transfer_column(self,source_plate,source_column_index,dest_plate,dest_column_index,volume,
-                        mix_before=True):
+                        mix_before=True, one_tip=False):
         
         assert isinstance(source_plate,Container)
         
         num_rows = source_plate.container_type.row_count() 
         
-        self.stamp(get_column_wells(source_plate,source_column_index)[0], 
-                get_column_wells(dest_plate,dest_column_index)[0],
-                volume,
-                shape={'rows':num_rows,'columns':1},
-                mix_before=mix_before)        
+        source_wells = get_column_wells(source_plate,source_column_index)
+        dest_wells = get_column_wells(dest_plate,dest_column_index)
+        
+        #stamp is only cost affective up to 2x max pipette tip volume
+        if volume>ul(220):
+            self.transfer(source_wells, dest_wells, volume,
+                          mix_before=mix_before,
+                          one_tip=one_tip)
+        else: 
+            self.stamp(source_wells[0], 
+                       dest_wells[0],
+                       volume,
+                       shape={'rows':num_rows,'columns':1},
+                       mix_before=mix_before,
+                       one_tip=one_tip)        
         
     def transfer_all_volume_evenly(self,sources,dests,**mix_kwargs):
         """
@@ -1811,8 +1821,6 @@ class CustomProtocol(Protocol):
         """
         
         
-        self._complete_mix_kwargs(mix_kwargs,source_origin,dest_origin,volume)
-        
         source_wells, dest_wells = convert_stamp_shape_to_wells(source_origin, 
                                                                dest_origin, 
                                                                shape=shape, 
@@ -1822,6 +1830,8 @@ class CustomProtocol(Protocol):
         
         
         self._assert_safe_to_pipette_from(source_wells)
+        
+        self._complete_mix_kwargs(mix_kwargs,source_wells,dest_wells,volume)
         
         super(CustomProtocol,self).stamp(source_origin=source_origin, dest_origin=dest_origin, 
                                          volume=volume, 
@@ -2643,8 +2653,11 @@ class CustomProtocol(Protocol):
         if not antibiotic:
             raise Exception('antibiotic required')
         
+        heat_shock_required = False
+        
         if not isinstance(bacteria_type_or_well, Reagent):
             force_include_soc = True
+            heat_shock_required = True
         
         if add_iptg:
             force_include_soc = True
@@ -2699,7 +2712,7 @@ class CustomProtocol(Protocol):
         if isinstance(bacteria_type_or_well, Reagent):
             self.provision_by_name(bacteria_type_or_well, transf_wells, ul(50))
         else:
-            self.transfer(bacteria_type_or_well, transf_wells, ul(50))
+            self.transfer(bacteria_type_or_well, transf_wells, ul(48))
         
         for i, source_well in enumerate(source_wells):
             transf_wells[i].name = source_well.name
@@ -2725,10 +2738,10 @@ class CustomProtocol(Protocol):
                                  {"mark": ice_cells_instruction_index, "state": "start"},
                                  '5:minute')         
         
-        
-        if antibiotic!=Antibiotic.amp or force_include_soc:
+        if antibiotic!=Antibiotic.amp or force_include_soc or heat_shock_required:
             
             deep_transf_plate = self.ref('deeptransf_plate', cont_type='96-deep', discard=True)
+
             
             deep_transf_wells = deep_transf_plate.wells_from(0,len(source_wells),columnwise=True)
             
@@ -2737,6 +2750,18 @@ class CustomProtocol(Protocol):
             
             self.provision_by_name(Reagent.soc_medium, deep_transf_wells, soc_medium_volume)
             
+            if heat_shock_required:
+                p.thermocycle(transf_plate, [{"cycles":  1,
+                                                "steps": [{"temperature": "42:celsius",
+                                                           "duration": "30:seconds"
+                                                           },
+                                                          {"temperature": "2:celsius",
+                                                           "duration": "2:minutes"
+                                                           },
+                                                          ]
+                                                }
+                                               ],volume=ul(50))
+                
             transf_well_volume = ul(40)
             
             self.transfer(transf_wells, deep_transf_wells, transf_well_volume)
@@ -2823,7 +2848,13 @@ class CustomProtocol(Protocol):
         if skip_pick:
             return
         
-        media_volume = space_available(liquid_culture_plate.well(0)) - (ul(5) if second_antibiotic else ul(0))
+        
+        iptg_volume = calculate_dilution_volume(mM(100), 
+                                                uM(500), 
+                                                space_available(liquid_culture_plate.well(0)))        
+        
+        media_volume = space_available(liquid_culture_plate.well(0)) - (ul(5) if second_antibiotic else ul(0)) \
+            - (iptg_volume if add_iptg else ul(0))
         
         growth_wells = get_column_wells(liquid_culture_plate, range(original_source_well_count))
         
@@ -2835,10 +2866,6 @@ class CustomProtocol(Protocol):
      
      
         if add_iptg:
-           
-            iptg_volume = calculate_dilution_volume(mM(100), 
-                                                   uM(500), 
-                                                   growth_wells[0].volume)
             
             self.provision_by_name(Reagent.iptg, growth_wells, iptg_volume, mix_after=True)        
      
@@ -2928,7 +2955,14 @@ class CustomProtocol(Protocol):
             
         p.provision_by_name(antibiotic.reagent,wells,volumes, mix_after=mix_after, **mix_kwargs)    
     
-    def measure_bacterial_density(self,wells,name_postfix=""):
+    def measure_bacterial_density(self,wells,name_postfix="",
+                                  blanking_antibiotic=None):
+        """
+
+        We always find an empty well to use as a comparison
+        If blanking antibiotic is provided, we will dispense a fresh amount of this reagent as a comparison
+        
+        """
             
         wells = convert_to_wellgroup(wells)
         
@@ -2938,21 +2972,29 @@ class CustomProtocol(Protocol):
         
         assert isinstance(source_container,Container)
         
+        
+        
+        measurement_name = 'absorbance_%s%s'%(self.absorbance_measurement_count,name_postfix)
+        
         transfer_to_absorbance_plate = False
         if source_container.container_type.shortname != '96-flat':
             transfer_to_absorbance_plate = True
+            
+        else:
+            assert not blanking_antibiotic, "blanking antibiotic only used with non 96-flat containers"
     
         if transfer_to_absorbance_plate:    
     
             if not self.absorbance_plate:
-                self.absorbance_plate = self.ref('absorbance_plate', cont_type="96-flat", discard=True)        
+                self.absorbance_plate = self.ref('absorbance_plate', cont_type="96-flat", discard=True)  
+                self.absorbance_plate.well('H12').name = 'empty_blanking_well'
             
             if not source_container.container_type.shortname.startswith('96-'):
                 raise Exception("OD measurement only works for 96-well source, please update")
             
             
-            if self.next_absorbance_plate_index>=12:
-                raise Exception('code only knows how to run 12 absorbance calls, please update to increase this')
+            if self.next_absorbance_plate_index>=8:
+                raise Exception('code only knows how to run 8 absorbance calls, please update to increase this')
             
             if len(wells)>8:
                 raise Exception('measure density can only handle up to 8 wells')
@@ -2968,21 +3010,70 @@ class CustomProtocol(Protocol):
                                     self.next_absorbance_plate_index,
                                     ul(100))
                 
-                wells = get_column_wells(self.absorbance_plate,
+                new_wells = get_column_wells(self.absorbance_plate,
                                          self.next_absorbance_plate_index)
+                             
                 
             else:
                 #individual wells
                 dest_wells = self.absorbance_plate.wells_from(self.next_absorbance_plate_index,len(wells), columnwise=True)
                 self.transfer(wells, dest_wells, ul(100))
-                wells = dest_wells
+                
+
+                new_wells = dest_wells
+        
+            copy_well_names(wells, 
+                            new_wells, 
+                            pre_fix='%s_'%wells[0].container.name, 
+                            post_fix='_%s'%measurement_name)
+            
+            wells = new_wells
+                
+            if blanking_antibiotic:
+                blanking_column_wells = get_column_wells(self.absorbance_plate, 
+                                                        11)
+                
+                media_blank_well = blanking_column_wells[self.next_absorbance_plate_index]
+                
+                media_blank_well.name = '%s_media_blank'%measurement_name
+                
+                self.add_antibiotic(media_blank_well, 
+                                    blanking_antibiotic,
+                                    total_volume_to_add_including_broth=ul(100))
+                
+                wells.extend(blanking_column_wells)
+                
                 
             self.next_absorbance_plate_index+=1
-            
         
-        self.absorbance(wells[0].container, wells.indices(),
+        
+        #find a well with no volume starting in the bottom right to use as the blank   
+        
+        plate = wells[0].container
+        assert isinstance(plate, Container)
+        reverse_wells = list(plate.all_wells(columnwise=True))
+        reverse_wells.reverse()
+        blank_well = None
+        
+        for well in reverse_wells:
+            if well.volume == ul(0):
+                blank_well = well
+                if blank_well not in wells:
+                    wells.append(blank_well)
+
+                if not blank_well.name:
+                    blank_well.name = 'empty_blank'
+                    
+                break
+        
+        if not blank_well:
+            raise Exception('must have at least one empty well to act as the blank')
+        
+        
+        
+        self.absorbance(plate, wells.indices(),
                         wavelength="600:nanometer",
-                        dataref='cell_density_600nm_absorbance_%s%s'%(self.absorbance_measurement_count,name_postfix), flashes=25)    
+                        dataref='cell_density_600nm_%s'%measurement_name, flashes=25)    
         
         self.absorbance_measurement_count+=1
     

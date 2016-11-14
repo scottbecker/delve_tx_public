@@ -1,3 +1,4 @@
+from __future__ import print_function
 import random
 import string
 import unittest
@@ -197,3 +198,48 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(utils.calculate_dilution_volume(utils.mM(100), 
                                                         utils.uM(500), 
                                                         ul(440)), ul(2.2))
+        
+        
+    def test_set_name(self):
+        
+        plate1 = create_blank_plate('96-flat')
+        
+        utils.set_name(plate1,'new name')
+        
+        well = plate1.well(0)
+        
+        utils.set_name(well,'new name 2')
+        
+        wells = plate1.wells_from(1,3)
+        
+        utils.set_name(wells,'new name 3')
+    
+    
+        
+        self.assertEqual(plate1.name, 'new name')
+        self.assertEqual(well.name, 'new name 2')
+        self.assertTrue(all([group_well.name=='new name 3' for group_well in wells]))
+        
+    def test_copy_well_names(self):
+        plate1 = create_blank_plate('96-flat')
+        plate2 = create_blank_plate('96-flat')
+        
+        utils.copy_well_names(plate1.well(1),plate2.well(1),
+                        pre_fix='plate1_')
+        
+        self.assertEqual(plate2.well(1).name,"plate1_A2")
+        
+        for i, well in enumerate(plate1.all_wells()):
+            well.name = "well_%s"%i
+            
+        utils.copy_well_names(plate1,plate2,
+                              pre_fix='plate1_',
+                              post_fix='_absorbance')
+        
+        self.assertTrue(all([well.name== 'plate1_well_%s_absorbance'%i for i,well in enumerate(plate2.all_wells())]))
+        
+        
+        
+        
+        
+        
