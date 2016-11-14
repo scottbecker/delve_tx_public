@@ -31,6 +31,7 @@ from autoprotocol.util import make_gel_extract_params, make_band_param
 
 
 MAX_PIPETTE_TIP_VOLUME = ul(900)
+MAX_STAMP_TIP_VOLUME = ul(110)
 
 class CustomProtocol(Protocol):
    
@@ -265,7 +266,7 @@ class CustomProtocol(Protocol):
                 del xfer['mix_after']  
         
     def transfer_column(self,source_plate,source_column_index,dest_plate,dest_column_index,volume,
-                        mix_before=True, one_tip=False):
+                        mix_before=False, one_tip=False):
         
         assert isinstance(source_plate,Container)
         
@@ -275,7 +276,8 @@ class CustomProtocol(Protocol):
         dest_wells = get_column_wells(dest_plate,dest_column_index)
         
         #stamp is only cost affective up to 2x max pipette tip volume
-        if volume>ul(220):
+        #We also can't complete a proper mix operation on large source wells
+        if volume>MAX_STAMP_TIP_VOLUME*2 or (mix_before and source_wells[0].volume>MAX_STAMP_TIP_VOLUME*2):
             self.transfer(source_wells, dest_wells, volume,
                           mix_before=mix_before,
                           one_tip=one_tip)
@@ -1833,6 +1835,10 @@ class CustomProtocol(Protocol):
         
         self._complete_mix_kwargs(mix_kwargs,source_wells,dest_wells,volume)
         
+        if mix_kwargs.get('mix_before') and source_wells[0].volume>MAX_STAMP_TIP_VOLUME*2:
+            #@TODO: consider auto-converting this into a transfer operation, the user was explicit though in requesting stamp
+            raise Exception('You should be using a transfer operation here - source volume is too large to mix properly with stamp')
+        
         super(CustomProtocol,self).stamp(source_origin=source_origin, dest_origin=dest_origin, 
                                          volume=volume, 
                                          shape=shape, 
@@ -2604,7 +2610,8 @@ class CustomProtocol(Protocol):
                       force_include_soc=False,
                       soc_medium_volume=ul(400),
                       bacteria_type_or_well=Reagent.zymo_dh5a,
-                      transform_volume=ul(2)
+                      transform_volume=ul(2),
+                      last_source_well_is_negative_control=False
                       ):
         """
         
@@ -2646,7 +2653,8 @@ class CustomProtocol(Protocol):
             Reagent or well for the chemically competent bacteria 
         transform_volume: volume, optional
             How much volume to use from the source well for transformation
-        
+        last_source_well_is_negative_control: bool, optional
+            If the last source well is a negative control. We will skip picking it if so.
             
         """
         
@@ -2670,7 +2678,7 @@ class CustomProtocol(Protocol):
     
         assert isinstance(antibiotic, Antibiotic)
     
-        original_source_well_count = len(source_wells)
+        num_pick_wells = len(source_wells) - (1 if last_source_well_is_negative_control else 0)
     
         if positive_control:
             if not antibiotic.positive_control_plasmid:
@@ -2767,7 +2775,7 @@ class CustomProtocol(Protocol):
             self.transfer(transf_wells, deep_transf_wells, transf_well_volume)
             
             if add_iptg:
-                iptg_wells = deep_transf_wells[0:original_source_well_count]
+                iptg_wells = deep_transf_wells[0:num_pick_wells]
                 
                 iptg_volume = calculate_dilution_volume(mM(100), 
                                                        uM(500), 
@@ -2856,7 +2864,7 @@ class CustomProtocol(Protocol):
         media_volume = space_available(liquid_culture_plate.well(0)) - (ul(5) if second_antibiotic else ul(0)) \
             - (iptg_volume if add_iptg else ul(0))
         
-        growth_wells = get_column_wells(liquid_culture_plate, range(original_source_well_count))
+        growth_wells = get_column_wells(liquid_culture_plate, range(num_pick_wells))
         
         self.add_antibiotic(growth_wells, antibiotic, total_volume_to_add_including_broth=media_volume)
         set_property(growth_wells,'antibiotic',antibiotic.name)
@@ -2871,9 +2879,9 @@ class CustomProtocol(Protocol):
      
      
         self.uncover(solid_culture_plate)
-        #don't pick negative and positive control (use original_source_well_count)
+        #don't pick negative and positive control (use num_pick_wells)
         count = 0
-        while count < original_source_well_count:
+        while count < num_pick_wells:
             pick_wells = liquid_culture_plate.wells_from(count,pick_count,columnwise = True)
             for i, pick_well in enumerate(pick_wells):
                 pick_well.name = solid_culture_plate.well(count).name+"_%s"%i
@@ -2956,11 +2964,15 @@ class CustomProtocol(Protocol):
         p.provision_by_name(antibiotic.reagent,wells,volumes, mix_after=mix_after, **mix_kwargs)    
     
     def measure_bacterial_density(self,wells,name_postfix="",
-                                  blanking_antibiotic=None):
+                                  blanking_antibiotic=None,
+                                  one_tip=False):
         """
 
         We always find an empty well to use as a comparison
         If blanking antibiotic is provided, we will dispense a fresh amount of this reagent as a comparison
+        
+        one_tip: bool, optional
+            If all wells have the same substance, use the same tip in any mix or transfer operations to save cost
         
         """
             
@@ -3008,7 +3020,9 @@ class CustomProtocol(Protocol):
                 self.transfer_column(source_container, column_index, 
                                     self.absorbance_plate, 
                                     self.next_absorbance_plate_index,
-                                    ul(100))
+                                    ul(100),
+                                    mix_before=True,
+                                    one_tip=one_tip)
                 
                 new_wells = get_column_wells(self.absorbance_plate,
                                          self.next_absorbance_plate_index)
@@ -3017,7 +3031,9 @@ class CustomProtocol(Protocol):
             else:
                 #individual wells
                 dest_wells = self.absorbance_plate.wells_from(self.next_absorbance_plate_index,len(wells), columnwise=True)
-                self.transfer(wells, dest_wells, ul(100))
+                self.transfer(wells, dest_wells, ul(100),
+                              mix_before=True,
+                              one_tip=one_tip)
                 
 
                 new_wells = dest_wells

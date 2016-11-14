@@ -56,14 +56,16 @@ def miniprep(p, source_bacteria_well,
                
             if measure_od:
                 p.measure_bacterial_density(growth_wells,
-                                            blanking_antibiotic=antibiotic)
+                                            blanking_antibiotic=antibiotic,
+                                            one_tip=True)
             
     if incubate_hours%24:
         p.incubate(growth_plate, "warm_37", "{}:hour".format(incubate_hours%24), shaking=True)
 
         if measure_od:
             p.measure_bacterial_density(growth_wells,
-                                        blanking_antibiotic=antibiotic)
+                                        blanking_antibiotic=antibiotic,
+                                        one_tip=True)
 
 
     if induce_high_copy_number:
@@ -71,7 +73,8 @@ def miniprep(p, source_bacteria_well,
     
         overnight_bacteria_volume_to_use = ul(400)
     
-        p.transfer(growth_wells, induction_wells, overnight_bacteria_volume_to_use)
+        p.transfer(growth_wells, induction_wells, overnight_bacteria_volume_to_use,
+                   mix_before=True)
     
         #adding antibiotic mixes after by default
         p.add_antibiotic(induction_wells, antibiotic, 
@@ -83,7 +86,8 @@ def miniprep(p, source_bacteria_well,
     
         if measure_od:
             p.measure_bacterial_density(induction_wells,
-                                        blanking_antibiotic=antibiotic)
+                                        blanking_antibiotic=antibiotic,
+                                        one_tip=True)
     
         growth_wells = induction_wells
  
@@ -112,7 +116,8 @@ def miniprep(p, source_bacteria_well,
 
         if measure_od:
             p.measure_bacterial_density(consolidation_well,
-                                        blanking_antibiotic=antibiotic)
+                                        blanking_antibiotic=antibiotic,
+                                        one_tip=True)
   
     final_growth_well = growth_wells[0]
         

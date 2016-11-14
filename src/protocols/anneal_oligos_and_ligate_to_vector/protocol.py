@@ -148,7 +148,8 @@ def anneal_oligos_and_ligate_to_vector(p, oligo1_tube, oligo2_tube,
     #transform, spread, pick 2 (recommended to follow up with sequencing)
     #we have 4 wells to spread
     if transform_spread_pick:
-        p.transform_spread_pick(ligate_wells, antibiotic)
+        p.transform_spread_pick(ligate_wells, antibiotic,
+                                last_source_well_is_negative_control=True)
     
     
 
