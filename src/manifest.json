@@ -590,6 +590,201 @@
                 }
             }, 
             "name": "AnnealOligosAndLigateToVector"
+        }, 
+        {
+            "inputs": {
+                "test_mode": {
+                    "default": true, 
+                    "required": true, 
+                    "type": "bool", 
+                    "description": "Set this to checked if this is a test run", 
+                    "label": "Is this a test run?"
+                }, 
+                "antibiotic": {
+                    "default": "cell_line", 
+                    "description": "Which antibiotic to use", 
+                    "type": "choice", 
+                    "options": [
+                        {
+                            "name": "cell line defined", 
+                            "value": "cell_line"
+                        }, 
+                        {
+                            "name": "ampicillin", 
+                            "value": "amp"
+                        }, 
+                        {
+                            "name": "chloramphenicol", 
+                            "value": "cam"
+                        }, 
+                        {
+                            "name": "kanamycin", 
+                            "value": "kan"
+                        }, 
+                        {
+                            "name": "spectinomycin", 
+                            "value": "spc"
+                        }
+                    ], 
+                    "label": "Antibiotic"
+                }, 
+                "bacteria_well": {
+                    "required": true, 
+                    "type": "aliquot"
+                }, 
+                "measure_od": {
+                    "default": true, 
+                    "required": true, 
+                    "type": "bool", 
+                    "description": "", 
+                    "label": "Measure OD after incubate?"
+                }, 
+                "slow_growth": {
+                    "default": false, 
+                    "required": true, 
+                    "type": "bool", 
+                    "description": "We will multiply the growth medium by 8x and consolidate before minipreping", 
+                    "label": "Does the bacteria grow slowly?"
+                }, 
+                "destroy_source_tube": {
+                    "default": false, 
+                    "required": true, 
+                    "type": "bool", 
+                    "description": "Destroy the source tube after using", 
+                    "label": "Destroy Source Tube?"
+                }, 
+                "incubate_hours": {
+                    "default": 24, 
+                    "required": true, 
+                    "type": "integer", 
+                    "description": "", 
+                    "label": "How long to incubate before miniprep?"
+                }, 
+                "induce_high_copy_number": {
+                    "default": false, 
+                    "required": true, 
+                    "type": "bool", 
+                    "description": "Needed for BAC plasmids. Requires EPI300 cells", 
+                    "label": "Induce high copy number?"
+                }
+            }, 
+            "name": "Miniprep", 
+            "version": "1.0.18", 
+            "command_string": "python -m protocols.miniprep.protocol", 
+            "additional_previews": [
+                {
+                    "refs": {
+                        "bacteria_tube": {
+                            "cover": null, 
+                            "label": "dna_tube", 
+                            "aliquots": {
+                                "0": {
+                                    "volume": "100.0:microliter", 
+                                    "name": null, 
+                                    "properties": {}
+                                }
+                            }, 
+                            "type": "micro-2.0", 
+                            "id": "ct19fyypa2sfns", 
+                            "store": "cold_80"
+                        }
+                    }, 
+                    "parameters": {
+                        "test_mode": true, 
+                        "antibiotic": "amp", 
+                        "bacteria_well": "bacteria_tube/0", 
+                        "measure_od": false, 
+                        "destroy_source_tube": true, 
+                        "incubate_hours": 16, 
+                        "induce_high_copy_number": false
+                    }
+                }, 
+                {
+                    "refs": {
+                        "bacteria_tube": {
+                            "cover": null, 
+                            "label": "dna_tube", 
+                            "aliquots": {
+                                "0": {
+                                    "volume": "100.0:microliter", 
+                                    "name": null, 
+                                    "properties": {}
+                                }
+                            }, 
+                            "type": "micro-2.0", 
+                            "id": "ct19fyypa2sfns", 
+                            "store": "cold_80"
+                        }
+                    }, 
+                    "parameters": {
+                        "test_mode": true, 
+                        "antibiotic": "cell_line", 
+                        "bacteria_well": "bacteria_tube/0", 
+                        "measure_od": true, 
+                        "destroy_source_tube": false, 
+                        "slow_growth": false, 
+                        "incubate_hours": 56, 
+                        "induce_high_copy_number": true
+                    }
+                }, 
+                {
+                    "refs": {
+                        "bacteria_tube": {
+                            "cover": null, 
+                            "label": "dna_tube", 
+                            "aliquots": {
+                                "0": {
+                                    "volume": "100.0:microliter", 
+                                    "name": null, 
+                                    "properties": {}
+                                }
+                            }, 
+                            "type": "micro-2.0", 
+                            "id": "ct19fyypa2sfns", 
+                            "store": "cold_80"
+                        }
+                    }, 
+                    "parameters": {
+                        "test_mode": true, 
+                        "antibiotic": "cell_line", 
+                        "bacteria_well": "bacteria_tube/0", 
+                        "measure_od": true, 
+                        "slow_growth": true, 
+                        "destroy_source_tube": false, 
+                        "incubate_hours": 56, 
+                        "induce_high_copy_number": false
+                    }
+                }
+            ], 
+            "preview": {
+                "refs": {
+                    "bacteria_tube": {
+                        "cover": null, 
+                        "label": "dna_tube", 
+                        "aliquots": {
+                            "0": {
+                                "volume": "100.0:microliter", 
+                                "name": null, 
+                                "properties": {}
+                            }
+                        }, 
+                        "type": "micro-2.0", 
+                        "id": "ct19fyypa2sfns", 
+                        "store": "cold_80"
+                    }
+                }, 
+                "parameters": {
+                    "test_mode": true, 
+                    "antibiotic": "cell_line", 
+                    "bacteria_well": "bacteria_tube/0", 
+                    "measure_od": true, 
+                    "slow_growth": true, 
+                    "destroy_source_tube": false, 
+                    "incubate_hours": 24, 
+                    "induce_high_copy_number": true
+                }
+            }, 
+            "description": "Take bacteria from a well, amplify it to 2uL, measure od, miniprep, and measure concentration "
         }
     ], 
     "license": "Proprietary", 

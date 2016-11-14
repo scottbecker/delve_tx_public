@@ -1,0 +1,28 @@
+{
+                "refs": {
+                    "bacteria_tube": {
+                        "cover": null, 
+                        "label": "dna_tube", 
+                        "aliquots": {
+                            "0": {
+                                "volume": "115.0:microliter", 
+                                "name": null, 
+                                "properties": {}
+                            }
+                        }, 
+                        "type": "micro-2.0", 
+                        "id": "ct19hjtv7kdugc", 
+                        "store": "cold_80"
+                    }
+                }, 
+                "parameters": {
+                    "test_mode": false, 
+                    "antibiotic": "cell_line", 
+                    "bacteria_well": "bacteria_tube/0", 
+                    "measure_od": true, 
+                    "destroy_source_tube": false, 
+                    "slow_growth": true, 
+                    "incubate_hours": 24, 
+                    "induce_high_copy_number": true
+                }
+            }
