@@ -1583,3 +1583,53 @@ class TestCustomProtocol(unittest.TestCase):
     
     def test_stamp_volume_check(self):
         pass
+    
+    def test_transfer_column_single_column(self):
+        p = Protocol()
+        plate1 = p.ref('test plate', cont_type='96-pcr', discard=True)        
+        plate2 = p.ref('test plate 2', cont_type='96-pcr', discard=True)
+        
+        for well in plate1.all_wells():
+            well.volume = ul(160)
+            
+        p.transfer_column(plate1, 0, 
+                         plate2, 
+                         1, 
+                         ul(50), mix_before=True)
+        
+        self.assertTrue(all([well.volume==ul(50) for well in get_column_wells(plate2,1)]))
+        self.assertTrue(all([well.volume==ul(110) for well in get_column_wells(plate1,0)]))
+        
+    
+    def test_transfer_column_multi_column(self):
+        p = Protocol()
+        plate1 = p.ref('test plate', cont_type='96-pcr', discard=True)        
+        plate2 = p.ref('test plate 2', cont_type='96-pcr', discard=True)
+    
+        for well in plate1.all_wells():
+            well.volume = ul(160)
+    
+        p.transfer_column(plate1, 0, 
+                          plate2, 
+                          [0,1,1,2], 
+                          ul(20), mix_before=True,
+                          one_tip=True)
+    
+        self.assertTrue(all([well.volume==ul(20) for well in get_column_wells(plate2,0)]))
+        self.assertTrue(all([well.volume==ul(40) for well in get_column_wells(plate2,1)]))
+        self.assertTrue(all([well.volume==ul(20) for well in get_column_wells(plate2,0)]))
+        self.assertTrue(all([well.volume==ul(80) for well in get_column_wells(plate1,0)]))    
+        
+        p.transfer_column(plate1, [1,2], 
+                          plate2, 
+                          [3,4], 
+                          ul(65), mix_before=True,
+                          one_tip=True)        
+        
+        self.assertTrue(all([well.volume==ul(65) for well in get_column_wells(plate2,[3,4])]))
+        self.assertTrue(all([well.volume==ul(95) for well in get_column_wells(plate1,[1,2])])) 
+        
+        
+    def test_stamp_zero_volume(self):
+        p = Protocol()
+        

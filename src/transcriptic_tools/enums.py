@@ -66,10 +66,12 @@ class Reagent(CustomEnum):
     pUC19_100pg_per_ul = 55
     pHSG298_500ng_per_ul = 54 #0.5ug/ul
     pHSG298_100pg_per_ul = 56
+    pGPS2_100pg_per_ul = 57
     
     #antibiotic positive control plasmids (aliases)
     kan_resistant_plasmid = 56
     amp_resistant_plasmid = 55
+    cam_resistant_plasmid = 57
 
     
     zymo_dh5a = 57
@@ -108,6 +110,9 @@ class Antibiotic(CustomEnum):
     strep = 4
     spc = 5
     
+    #special case to make dealing with LB only easier
+    no_antibiotic = 6
+    
     _goal_concentrations = {
        1: 100
     }
@@ -122,10 +127,18 @@ class Antibiotic(CustomEnum):
     
     @property
     def broth(self):
+        
+        if self.name == 'no_antibiotic':
+            return Reagent.lb_miller
+        
         return Reagent.from_string('lb_%s'%self.name)
     
     @property
     def positive_control_plasmid(self):
+        
+        if self.name == 'no_antibiotic':
+            return Reagent.amp_resistant_plasmid        
+        
         return Reagent.from_string('%s_resistant_plasmid'%self.name)    
     
     @property

@@ -31,7 +31,7 @@ from autoprotocol.util import make_gel_extract_params, make_band_param
 
 
 MAX_PIPETTE_TIP_VOLUME = ul(900)
-MAX_STAMP_TIP_VOLUME = ul(110)
+MAX_STAMP_TIP_VOLUME = ul(148)
 
 class CustomProtocol(Protocol):
    
@@ -265,15 +265,15 @@ class CustomProtocol(Protocol):
             ul(xfer['volume']) >= ul(10):
                 del xfer['mix_after']  
         
-    def transfer_column(self,source_plate,source_column_index,dest_plate,dest_column_index,volume,
+    def transfer_column(self,source_plate,source_column_index_or_indexes,dest_plate,dest_column_index_or_indexes,volume,
                         mix_before=False, one_tip=False):
         
         assert isinstance(source_plate,Container)
         
         num_rows = source_plate.container_type.row_count() 
         
-        source_wells = get_column_wells(source_plate,source_column_index)
-        dest_wells = get_column_wells(dest_plate,dest_column_index)
+        source_wells = get_column_wells(source_plate,source_column_index_or_indexes)
+        dest_wells = get_column_wells(dest_plate,dest_column_index_or_indexes)
         
         #stamp is only cost affective up to 2x max pipette tip volume
         #We also can't complete a proper mix operation on large source wells
@@ -282,8 +282,12 @@ class CustomProtocol(Protocol):
                           mix_before=mix_before,
                           one_tip=one_tip)
         else: 
-            self.stamp(source_wells[0], 
-                       dest_wells[0],
+            
+            source_wells = source_plate.wells(source_column_index_or_indexes)
+            dest_wells = dest_plate.wells(dest_column_index_or_indexes)
+            
+            self.stamp(source_wells, 
+                       dest_wells,
                        volume,
                        shape={'rows':num_rows,'columns':1},
                        mix_before=mix_before,
@@ -1620,7 +1624,7 @@ class CustomProtocol(Protocol):
             raise Exception('Too much liquid drawn from sources: %s'%sources)
         self._assert_valid_add_volume(dests) 
 
-    def stamp(self, source_origin, dest_origin, volume, shape=dict(rows=8,
+    def stamp(self, source_origins, dest_origins, volume, shape=dict(rows=8,
                                                                    columns=12),
              
               aspirate_speed=None, dispense_speed=None, aspirate_source=None,
@@ -1689,12 +1693,12 @@ class CustomProtocol(Protocol):
     
         Parameters
         ----------
-        source_origin : Container, Well, WellGroup, List of Wells
+        source_origins : Container, Well, WellGroup, List of Wells
             Top-left well or wells where the rows/columns will be defined with
             respect to the source transfer.
             If a container is specified, stamp will be applied to all
             quadrants of the container.
-        dest_origin : Container, Well, WellGroup, List of Wells
+        dest_origins : Container, Well, WellGroup, List of Wells
             Top-left well or wells where the rows/columns will be defined with
             respect to the destination transfer.
             If a container is specified, stamp will be applied to all
@@ -1822,24 +1826,36 @@ class CustomProtocol(Protocol):
     
         """
         
+        source_origins = convert_to_wellgroup(source_origins)
+        dest_origins = convert_to_wellgroup(dest_origins)
         
-        source_wells, dest_wells = convert_stamp_shape_to_wells(source_origin, 
-                                                               dest_origin, 
-                                                               shape=shape, 
-                                                               one_source=one_source)
+        #check all source/dests are valid
+        for i, (source_origin, dest_origin) in enumerate(zip(source_origins,dest_origins)):
+            source_wells, dest_wells = convert_stamp_shape_to_wells(source_origin, 
+                                                                    dest_origin, 
+                                                                    shape=shape, 
+                                                                    one_source=one_source)
         
         
         
         
-        self._assert_safe_to_pipette_from(source_wells)
+            self._assert_safe_to_pipette_from(source_wells)
         
-        self._complete_mix_kwargs(mix_kwargs,source_wells,dest_wells,volume)
+            if i==0:
+                self._complete_mix_kwargs(mix_kwargs,source_wells,dest_wells,volume)
         
-        if mix_kwargs.get('mix_before') and source_wells[0].volume>MAX_STAMP_TIP_VOLUME*2:
-            #@TODO: consider auto-converting this into a transfer operation, the user was explicit though in requesting stamp
-            raise Exception('You should be using a transfer operation here - source volume is too large to mix properly with stamp')
+            if mix_kwargs.get('mix_before') and source_wells[0].volume>MAX_STAMP_TIP_VOLUME*2:
+                #@TODO: consider auto-converting this into a transfer operation, the user was explicit though in requesting stamp
+                raise Exception('You should be using a transfer operation here - source volume is too large to mix properly with stamp')
         
-        super(CustomProtocol,self).stamp(source_origin=source_origin, dest_origin=dest_origin, 
+        #@TODO: remove this once this bug is fixed https://github.com/transcriptic/transcriptic/issues/83
+        zero_volume = False
+        fake_volume = ul(1.2345678)
+        if volume==ul(0) and (mix_kwargs.get('mix_before') or mix_kwargs.get('mix_after')):
+            zero_volume=True
+            volume = fake_volume
+        
+        super(CustomProtocol,self).stamp(source_origin=source_origins, dest_origin=dest_origins, 
                                          volume=volume, 
                                          shape=shape, 
                                          aspirate_speed=aspirate_speed, dispense_speed=dispense_speed, aspirate_source=aspirate_source,
@@ -1848,6 +1864,14 @@ class CustomProtocol(Protocol):
                                          one_tip=one_tip, new_group=new_group,
                                          **mix_kwargs)
         
+        #@TODO: remove this once this bug is fixed https://github.com/transcriptic/transcriptic/issues/83
+        if zero_volume:
+            #remove the fake volume and set to zero
+            for group in self.instructions[-1].data['groups']:
+                for transfer in group['transfer']:
+                    if transfer['volume'] == fake_volume:
+                        transfer['volume'] = ul(0)
+            
         self._assert_valid_transfer(source_wells, dest_wells)
         
 
@@ -2594,7 +2618,7 @@ class CustomProtocol(Protocol):
     #--------------- Bacterial Methods ----------
     #--------------------------------------------
     
-    def transform_spread_pick(self,source_wells,
+    def transform_spread_pick(self,source_wells_or_well_lists,
                       antibiotic,
                       pick_count=2,
                       minimum_picked_colonies=0,
@@ -2610,15 +2634,16 @@ class CustomProtocol(Protocol):
                       force_include_soc=False,
                       soc_medium_volume=ul(400),
                       bacteria_type_or_well=Reagent.zymo_dh5a,
-                      transform_volume=ul(2),
-                      last_source_well_is_negative_control=False
+                      transform_volumes=ul(2),
+                      last_source_well_is_negative_control=False,
+                      bacteria_volume=ul(50)
                       ):
         """
         
         Parameters
         ----------
-        source_wells : Well, WellGroup, [Well], or Container
-            welsl containing bacteria
+        source_wells_or_well_lists : Well, WellGroup, [Well], Container or (list of wellgroups or [Well])
+            Wells containing bacteria. If this is a list, 
         antibiotic : Antibiotic
             The main antibiotic to use
         minimum_picked_colonies : int, optional
@@ -2651,8 +2676,8 @@ class CustomProtocol(Protocol):
             how much soc volume to add
         bacteria_type_or_well: Reagents or well, optional
             Reagent or well for the chemically competent bacteria 
-        transform_volume: volume, optional
-            How much volume to use from the source well for transformation
+        transform_volumes: volume or list of volumes or list of lists of volumes, optional
+            How much volume to use from the source wells for transformation
         last_source_well_is_negative_control: bool, optional
             If the last source well is a negative control. We will skip picking it if so.
             
@@ -2672,13 +2697,25 @@ class CustomProtocol(Protocol):
         
         curr_time = datetime.datetime.now().strftime("%m_%d_%Y_%H_%M_%S")
         
-        source_wells = convert_to_wellgroup(source_wells)
+
+        if isinstance(source_wells_or_well_lists,list) and (isinstance(source_wells_or_well_lists[0], 
+                                                                     WellGroup) or \
+                                                            isinstance(source_wells_or_well_lists[0], 
+                                                                     list)):
+            source_well_groups = []
+            for source_well_group in source_wells_or_well_lists:
+                source_well_groups.append(convert_to_wellgroup(source_well_group))
+                
+        else:
+            source_wells = convert_to_wellgroup(source_wells_or_well_lists)
+            source_well_groups = [[source_well] for source_well in source_wells]
         
-        assert all([source_well.name for source_well in source_wells]), "all transformation source wells must have a name"
+        for source_wells in source_well_groups:
+            assert all([source_well.name for source_well in source_wells]), "all transformation source wells must have a name"
     
         assert isinstance(antibiotic, Antibiotic)
     
-        num_pick_wells = len(source_wells) - (1 if last_source_well_is_negative_control else 0)
+        num_pick_wells = len(source_well_groups) - (1 if last_source_well_is_negative_control else 0)
     
         if positive_control:
             if not antibiotic.positive_control_plasmid:
@@ -2691,7 +2728,7 @@ class CustomProtocol(Protocol):
     
             self.provision_by_name(antibiotic.positive_control_plasmid, pc_well, ul(22.6))
     
-            source_wells.append(pc_well)
+            source_well_groups.append([pc_well])
     
         if negative_control:
             nc_well = self.ref('nc_water', cont_type='micro-1.5', 
@@ -2700,9 +2737,9 @@ class CustomProtocol(Protocol):
     
             self.provision_by_name(Reagent.water, nc_well, ul(22.6))
     
-            source_wells.append(nc_well)
+            source_well_groups.append([nc_well])
     
-        if len(source_wells)>6:
+        if len(source_well_groups)>6:
             raise Exception('we can only tranform 6 wells total at a time, including negative and positive controls')        
         
         #---------- transform --------------
@@ -2715,20 +2752,24 @@ class CustomProtocol(Protocol):
         
         pre_cool_instruction_index = self.get_instruction_index()
         
-        transf_wells = transf_plate.wells_from(0,len(source_wells),columnwise=True)
+        transf_wells = transf_plate.wells_from(0,len(source_well_groups),columnwise=True)
         
         if isinstance(bacteria_type_or_well, Reagent):
-            self.provision_by_name(bacteria_type_or_well, transf_wells, ul(50))
+            self.provision_by_name(bacteria_type_or_well, transf_wells, bacteria_volume)
         else:
-            self.transfer(bacteria_type_or_well, transf_wells, ul(48))
+            self.transfer(bacteria_type_or_well, transf_wells, bacteria_volume)
         
-        for i, source_well in enumerate(source_wells):
-            transf_wells[i].name = source_well.name
-        
-        self.transfer(source_wells, transf_wells, ul(2),mix_after=True,
-                      #gently
-                      mix_seconds = 3
-                      )
+        for i, source_well_group in enumerate(source_well_groups):
+            transf_wells[i].name = "_and_".join([source_well.name for source_well in source_well_group])
+
+        if isinstance(transform_volumes, Unit):
+            transform_volumes =  [transform_volumes]*len(source_well_groups)          
+
+        for i, (source_well_group, group_transform_volume_or_volumes) in enumerate(zip(source_well_groups,transform_volumes)):
+            self.transfer(source_well_group, transf_wells[i], group_transform_volume_or_volumes, mix_after=True,
+                          #gently
+                          mix_seconds = 3
+                          ) 
         
         cell_mixing_instruction_index = self.get_instruction_index()
             
@@ -2751,20 +2792,20 @@ class CustomProtocol(Protocol):
             deep_transf_plate = self.ref('deeptransf_plate', cont_type='96-deep', discard=True)
 
             
-            deep_transf_wells = deep_transf_plate.wells_from(0,len(source_wells),columnwise=True)
+            deep_transf_wells = deep_transf_plate.wells_from(0,len(transf_wells),columnwise=True)
             
-            for i, source_well in enumerate(source_wells):
-                deep_transf_wells[i].name = source_well.name   
+            for i, transf_well in enumerate(transf_wells):
+                deep_transf_wells[i].name = transf_well.name   
             
             self.provision_by_name(Reagent.soc_medium, deep_transf_wells, soc_medium_volume)
             
             if heat_shock_required:
-                p.thermocycle(transf_plate, [{"cycles":  1,
+                self.thermocycle(transf_plate, [{"cycles":  1,
                                                 "steps": [{"temperature": "42:celsius",
-                                                           "duration": "30:seconds"
+                                                           "duration": "30:second"
                                                            },
                                                           {"temperature": "2:celsius",
-                                                           "duration": "2:minutes"
+                                                           "duration": "2:minute"
                                                            },
                                                           ]
                                                 }
@@ -2931,6 +2972,10 @@ class CustomProtocol(Protocol):
     
         if broth_volume:
             p.provision_by_name(Reagent.lb_miller,wells,broth_volume)
+        
+        #nothing to add for the no_antibiotic antibiotic
+        if antibiotic==Antibiotic.no_antibiotic:
+            return            
         
         def get_well_antibiotic_volume(well_volume):
             reagent_concentration = 1.0/antibiotic.reagent_concentration.to('microgram/microliter')
@@ -3104,16 +3149,16 @@ class CustomProtocol(Protocol):
                       Antibiotic.amp: "ki17sbb845ssx9",
                       Antibiotic.spc: "ki17sbb9r7jf98",
                       Antibiotic.cam: "ki17urn3gg8tmj",
-                      None: "ki17reefwqq3sq"},
+                      Antibiotic.no_antibiotic: "ki17reefwqq3sq"},
                   '1-flat':{Antibiotic.kan: "ki17t8j7kkzc4g",
                       Antibiotic.amp: "ki17t8jcebshtr",
                       Antibiotic.spc: "ki17t8jaa96pw3",
                       Antibiotic.cam: "ki17urn592xejq",
-                      None: "ki17t8jejbea4z"}     
+                      Antibiotic.no_antibiotic: "ki17t8jejbea4z"}     
                   }
         
         try:
-            kit_id = plates[container_type_name][antibiotic]
+            kit_id = plates[container_type_name][antibiotic if antibiotic else Antibiotic.no_antibiotic]
         except KeyError,e:
             raise Exception('we can\'t find a plate for %s with antibiotic %s'%(container_type_name, antibiotic.name))
         

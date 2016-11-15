@@ -53,6 +53,9 @@ def get_transcriptic_inventory():
         Reagent.pHSG298_500ng_per_ul     : 'rs18rx5pyh6fku',
         Reagent.pUC19_100pg_per_ul: 'rs18rx59spw2t8',
         Reagent.pHSG298_100pg_per_ul: 'rs18rx6a44qss7',
+        
+        
+        
         Reagent.iptg          : 'rs18vwgfgxq597', # catalog: 100mM
         'm13_f'                       : 'rs17tcpqwqcaxe', # catalog; M13 Forward (-41); cold_20 (1ul = 100pmol)
         'm13_r'                       : 'rs17tcph6e2qzh', # catalog; M13 Reverse (-48); cold_20 (1ul = 100pmol)
@@ -107,7 +110,14 @@ def get_our_inventory(is_test_mode):
         Reagent.copycontrol_induction_solution:{
             'id':'ct19hc49an636q',
             'cont_type':'96-deep',
+        },
+        Reagent.pGPS2_100pg_per_ul:{
+            'id':'not made yet',
+            'cont_type':'96-pcr',   
+            'storage':Temperature.cold_20.name,
         }
+                
+        
     }      
     
     #default storage=cold_4, requires_mixing=True, cont_type=micro-1.5
@@ -117,13 +127,15 @@ def get_our_inventory(is_test_mode):
         if not reagent_info.get('cont_type'):
             reagent_info['cont_type'] = 'micro-1.5'
         if reagent_info.get('requires_mixing') == None:
-            reagent_info['requires_mixing'] = True        
+            reagent_info['requires_mixing'] = True   
+        
     
     if is_test_mode:
         #REAL INVENTORY
         inventory[Reagent.freeze_medium]['id'] = 'ct196xu2eqr5hn'
         inventory[Reagent.strep]['id'] = 'ct19gqqx26wk7r'
         inventory[Reagent.copycontrol_induction_solution]['id'] = 'ct19hctrbwdbwd'
+        inventory[Reagent.pGPS2_100pg_per_ul]['id'] = 'ct19mzjcf99pfu'
 
     #convert reagent keys into string keys for backward compatibility
     reagent_keys = [key for key in inventory.keys() if isinstance(key,Reagent)]
