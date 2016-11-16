@@ -3010,7 +3010,8 @@ class CustomProtocol(Protocol):
     
     def measure_bacterial_density(self,wells,name_postfix="",
                                   blanking_antibiotic=None,
-                                  one_tip=False):
+                                  one_tip=False,
+                                  mix_before=True):
         """
 
         We always find an empty well to use as a comparison
@@ -3066,7 +3067,7 @@ class CustomProtocol(Protocol):
                                     self.absorbance_plate, 
                                     self.next_absorbance_plate_index,
                                     ul(100),
-                                    mix_before=True,
+                                    mix_before=mix_before,
                                     one_tip=one_tip)
                 
                 new_wells = get_column_wells(self.absorbance_plate,
@@ -3077,7 +3078,7 @@ class CustomProtocol(Protocol):
                 #individual wells
                 dest_wells = self.absorbance_plate.wells_from(self.next_absorbance_plate_index,len(wells), columnwise=True)
                 self.transfer(wells, dest_wells, ul(100),
-                              mix_before=True,
+                              mix_before=mix_before,
                               one_tip=one_tip)
                 
 
