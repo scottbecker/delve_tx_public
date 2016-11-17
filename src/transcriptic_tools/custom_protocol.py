@@ -20,7 +20,7 @@ from transcriptic_tools.utils import (ul, get_well_dead_volume,
                                       set_property, ceil_volume, init_inventory_well,
                                       touchdown_pcr, convert_stamp_shape_to_wells,
                                       convert_mass_to_volume, ug, round_volume,
-                                      calculate_dilution_volume, mM, uM, copy_well_names)
+                                      calculate_dilution_volume, mM, uM, copy_cell_line_name, copy_well_names)
 from lib import lists_intersect, get_dict_optional_value, get_melting_temp
 from transcriptic_tools.enums import Reagent, Antibiotic, Temperature
 from instruction import MiniPrep
@@ -2620,6 +2620,7 @@ class CustomProtocol(Protocol):
     
     def transform_spread_pick(self,source_wells_or_well_lists,
                       antibiotic,
+                      new_cell_line_name=None,
                       pick_count=2,
                       minimum_picked_colonies=0,
                       negative_control=True,
@@ -2680,6 +2681,8 @@ class CustomProtocol(Protocol):
             How much volume to use from the source wells for transformation
         last_source_well_is_negative_control: bool, optional
             If the last source well is a negative control. We will skip picking it if so.
+        new_cell_line_name: str, optional
+            What to set the cell_line_Name for the transformed bacteria. This will default to the cell_line_name+well name
             
         """
         
@@ -2756,8 +2759,10 @@ class CustomProtocol(Protocol):
         
         if isinstance(bacteria_type_or_well, Reagent):
             self.provision_by_name(bacteria_type_or_well, transf_wells, bacteria_volume)
+            bacteria_name = bacteria_type_or_well.name
         else:
             self.transfer(bacteria_type_or_well, transf_wells, bacteria_volume)
+            bacteria_name = bacteria_type_or_well.properties['cell_line_name']
         
         for i, source_well_group in enumerate(source_well_groups):
             transf_wells[i].name = "_and_".join([source_well.name for source_well in source_well_group])
@@ -2874,6 +2879,12 @@ class CustomProtocol(Protocol):
             dest.name = innoculant.name
             self.spread(innoculant, dest, spread_volume)
             
+            if new_cell_line_name:
+                set_property(dest, 'cell_line_name', new_cell_line_name)
+            else:
+                set_property(dest, 'cell_line_name', '%s_with_%s'%(bacteria_name,dest.name))
+                
+            
             spread_instruction_index = self.get_instruction_index()
             
             #don't allow the agar plate to cool down
@@ -2920,14 +2931,22 @@ class CustomProtocol(Protocol):
      
         real_growth_wells = []
         self.uncover(solid_culture_plate)
+        
         #don't pick negative and positive control (use num_pick_wells)
         count = 0
         while count < num_pick_wells:
             pick_wells = liquid_culture_plate.wells_from(count,pick_count,columnwise = True)
+
+            
+            agar_source_well = solid_culture_plate.well(count)
+            
+            copy_cell_line_name(agar_source_well, pick_wells)
+            
             for i, pick_well in enumerate(pick_wells):
-                pick_well.name = solid_culture_plate.well(count).name+"_%s"%i
+                pick_well.name = agar_source_well.name+"_%s"%i
+                
             real_growth_wells.extend(pick_wells)
-            self.autopick(solid_culture_plate.well(count), pick_wells, 
+            self.autopick(agar_source_well, pick_wells, 
                           min_abort = minimum_picked_colonies, 
                           dataref="autopick_%d" % count)
             count += 1
