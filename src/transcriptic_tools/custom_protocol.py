@@ -2905,20 +2905,20 @@ class CustomProtocol(Protocol):
         media_volume = space_available(liquid_culture_plate.well(0)) - (ul(5) if second_antibiotic else ul(0)) \
             - (iptg_volume if add_iptg else ul(0))
         
-        growth_wells = get_column_wells(liquid_culture_plate, range(num_pick_wells))
+        potential_growth_wells = get_column_wells(liquid_culture_plate, range(num_pick_wells))
         
-        self.add_antibiotic(growth_wells, antibiotic, total_volume_to_add_including_broth=media_volume)
-        set_property(growth_wells,'antibiotic',antibiotic.name)
+        self.add_antibiotic(potential_growth_wells, antibiotic, total_volume_to_add_including_broth=media_volume)
+        set_property(potential_growth_wells,'antibiotic',antibiotic.name)
         
         if second_antibiotic:
-            self.add_antibiotic(growth_wells, second_antibiotic)
+            self.add_antibiotic(potential_growth_wells, second_antibiotic)
      
      
         if add_iptg:
-            
-            self.provision_by_name(Reagent.iptg, growth_wells, iptg_volume, mix_after=True)        
+            self.provision_by_name(Reagent.iptg, potential_growth_wells, iptg_volume, mix_after=True)        
      
      
+        real_growth_wells = []
         self.uncover(solid_culture_plate)
         #don't pick negative and positive control (use num_pick_wells)
         count = 0
@@ -2926,6 +2926,7 @@ class CustomProtocol(Protocol):
             pick_wells = liquid_culture_plate.wells_from(count,pick_count,columnwise = True)
             for i, pick_well in enumerate(pick_wells):
                 pick_well.name = solid_culture_plate.well(count).name+"_%s"%i
+            real_growth_wells.extend(pick_wells)
             self.autopick(solid_culture_plate.well(count), pick_wells, 
                           min_abort = minimum_picked_colonies, 
                           dataref="autopick_%d" % count)
@@ -2936,7 +2937,14 @@ class CustomProtocol(Protocol):
     
         self.incubate(liquid_culture_plate,Temperature.warm_37, liquid_growth_time, shaking=True) 
         
-        self.measure_bacterial_density(growth_wells)
+        leftover_wells = set(potential_growth_wells) - set(real_growth_wells)
+        
+        media_blank_well = list(leftover_wells)[0] if leftover_wells else None
+        
+        if not media_blank_well:
+            raise Exception('please update this function to make a new blank when there are 8 colonies to pick')
+        
+        self.measure_bacterial_density(real_growth_wells+[media_blank_well])
     
     def add_antibiotic(p,wellsorcontainer,antibiotic, broth_volume=None,
                        mix_after=None,total_volume_to_add_including_broth=None,**mix_kwargs):
@@ -3047,8 +3055,8 @@ class CustomProtocol(Protocol):
                 self.absorbance_plate = self.ref('absorbance_plate', cont_type="96-flat", discard=True)  
                 self.absorbance_plate.well('H12').name = 'empty_blanking_well'
             
-            if not source_container.container_type.shortname.startswith('96-'):
-                raise Exception("OD measurement only works for 96-well source, please update")
+            #if not source_container.container_type.shortname.startswith('96-'):
+            #    raise Exception("OD measurement only works for 96-well source, please update")
             
             
             if self.next_absorbance_plate_index>=8:
@@ -3108,7 +3116,9 @@ class CustomProtocol(Protocol):
                 
             self.next_absorbance_plate_index+=1
         
-        
+        elif mix_before:
+            self.mix(wells,one_tip=one_tip)
+            
         #find a well with no volume starting in the bottom right to use as the blank   
         
         plate = wells[0].container

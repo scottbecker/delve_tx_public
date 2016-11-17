@@ -208,8 +208,6 @@ def put_well_data(container_id, well_index, data_obj, headers=TSC_HEADERS, org_n
     response.raise_for_status()
 
 
-
-
 def set_well_name(well_or_wells, name):
     wells = convert_to_wellgroup(well_or_wells)
     for well in wells:
