@@ -3285,7 +3285,7 @@ class CustomProtocol(Protocol):
         
         oligo_wells = [primer1_well,primer2_well]
         
-        assert all([well.properties.get('Concentration')=='10uM' for well in oligo_wells]), 'All oligos must be at 10uM'
+        assert all([well.properties.get('Concentration') in ['10uM','10.00uM','10.0uM'] for well in oligo_wells]), 'All oligos must be at 10uM'
         
         # Temporary tubes for use, then discarded (you can't set storage if you are going to discard)
         mastermix_well = self.ref("mastermix", cont_type="micro-1.5", discard=True).well(0)
@@ -3349,6 +3349,7 @@ class CustomProtocol(Protocol):
         self.transfer(mastermix_well, pcr_wells, ul(24))
         
         # Finally add template
+        #@TODO: update this to be more intelligent about the dna concentration of the source well
         self.transfer(template_well,  experimental_pcr_well, ul(1), mix_after=True)
         
         if negative_control:
