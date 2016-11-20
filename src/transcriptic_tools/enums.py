@@ -66,16 +66,19 @@ class Reagent(CustomEnum):
     pUC19_100pg_per_ul = 55
     pHSG298_500ng_per_ul = 54 #0.5ug/ul
     pHSG298_100pg_per_ul = 56
-    pGPS2_100pg_per_ul = 57
+    pGPS2_100pg_per_ul = 59
     
     #antibiotic positive control plasmids (aliases)
     kan_resistant_plasmid = 56
     amp_resistant_plasmid = 55
-    cam_resistant_plasmid = 57
+    cam_resistant_plasmid = 59
 
     
     zymo_dh5a = 57
     soc_medium = 58
+    
+    #next number is 60
+    
     
     
     @property
