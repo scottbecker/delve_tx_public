@@ -2771,7 +2771,8 @@ class CustomProtocol(Protocol):
             transform_volumes =  [transform_volumes]*len(source_well_groups)          
 
         for i, (source_well_group, group_transform_volume_or_volumes) in enumerate(zip(source_well_groups,transform_volumes)):
-            self.transfer(source_well_group, transf_wells[i], group_transform_volume_or_volumes, mix_after=True,
+            self.transfer(source_well_group, transf_wells[i], group_transform_volume_or_volumes, mix_before=True,
+                          mix_after=True,
                           #gently
                           mix_seconds = 3
                           ) 
