@@ -2732,6 +2732,10 @@ class CustomProtocol(Protocol):
             self.provision_by_name(antibiotic.positive_control_plasmid, pc_well, ul(22.6))
     
             source_well_groups.append([pc_well])
+            
+            
+            if not isinstance(transform_volumes, Unit):
+                transform_volumes.append(ul(2))            
     
         if negative_control:
             nc_well = self.ref('nc_water', cont_type='micro-1.5', 
@@ -2741,6 +2745,9 @@ class CustomProtocol(Protocol):
             self.provision_by_name(Reagent.water, nc_well, ul(22.6))
     
             source_well_groups.append([nc_well])
+            
+            if not isinstance(transform_volumes, Unit):
+                transform_volumes.append(ul(2))
     
         if len(source_well_groups)>6:
             raise Exception('we can only tranform 6 wells total at a time, including negative and positive controls')        

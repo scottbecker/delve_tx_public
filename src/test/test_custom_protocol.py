@@ -1513,6 +1513,8 @@ class TestCustomProtocol(unittest.TestCase):
         p._complete_mix_kwargs(mix_kwargs, cell_plate.wells(0), cell_plate.wells(1), ul(100),
                                allow_different_mix_options=False)
         
+        p.transfer(cell_plate.wells(0), cell_plate.wells(1), ul(100), mix_seconds=4, mix_after=True)
+        
         self.assertDictEqual(mix_kwargs,
                              {
                                  'mix_vol': ul(85),
