@@ -1,6 +1,7 @@
 from __future__ import print_function
 from transcriptic_tools.utils import (ul, ml, get_cell_line_name, get_well_max_volume,
-                                      copy_cell_line_name, set_property, get_volume)
+                                      copy_cell_line_name, set_property, get_volume,
+                                      set_well_name)
 
 from transcriptic_tools.harness import run
 from transcriptic_tools import CustomProtocol as Protocol
@@ -29,8 +30,10 @@ def amplify_and_freeze_bacteria(p, source_bacteria_well,
     
     # Tubes and plates
     growth_plate = p.ref('growth_plate', cont_type="96-flat", discard=True)
-    growth_wells = growth_plate.wells(['A1','A2'])
-    
+    growth_wells = growth_plate.wells(['A1','B1'])
+    set_well_name(growth_wells,'growth_well')
+    control_well = growth_plate.wells(['C1'])
+    control_well.name = 'blanking_well'
     mix_well =  p.ref('temp_mix_tube', cont_type='micro-1.5',
                       discard=True).well(0)
     
@@ -48,11 +51,13 @@ def amplify_and_freeze_bacteria(p, source_bacteria_well,
     
     #grow bacteria until they are in their log phase of growth
     #https://www.qiagen.com/us/resources/technologies/plasmid-resource-center/growth%20of%20bacterial%20cultures/
-    p.incubate(growth_plate, "warm_37", "{}:hour".format(15), shaking=True)
+    p.incubate(growth_plate, "warm_37", "{}:hour".format(16), shaking=True)
     
-    p.uncover(growth_plate)
+
+    p.add_antibiotic(control_well, antibiotic, broth_volume=ul(325))
     
-    p.measure_bacterial_density(growth_wells,
+    
+    p.measure_bacterial_density(growth_wells+control_well,
                                one_tip=True, 
                                mix_before=True)
     
