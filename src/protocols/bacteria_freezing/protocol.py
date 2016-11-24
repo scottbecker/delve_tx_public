@@ -54,7 +54,8 @@ def amplify_and_freeze_bacteria(p, source_bacteria_well,
     p.incubate(growth_plate, "warm_37", "{}:hour".format(16), shaking=True)
     
 
-    p.add_antibiotic(control_well, antibiotic, broth_volume=ul(325))
+    p.add_antibiotic(control_well, antibiotic, broth_volume=ul(325),
+                     mix_after=False)
     
     
     p.measure_bacterial_density(growth_wells+control_well,
