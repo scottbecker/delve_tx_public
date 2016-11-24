@@ -101,7 +101,7 @@ def miniprep(p, source_bacteria_well,
         
         set_name(trash_wells,'trash_well')
 
-        p.spin(growth_plate, '4000:g', '3:minute')
+        p.spin(growth_plate, '4000:g', '10:minute')
         
         consolidation_well = growth_wells[0]
 

@@ -155,7 +155,7 @@ EFFECTIVE_ANTIBIOTIC_CONCeNTRATIONS = {
     #1 microgram/milliliter = 1 nanogram/microliter
     Antibiotic.amp: Unit(100,'nanogram/microliter'),
     Antibiotic.kan: Unit(50,'nanogram/microliter'),
-    Antibiotic.cam: Unit(25,'nanogram/microliter'),
+    Antibiotic.cam: Unit(12.5,'nanogram/microliter'),
     Antibiotic.strep: Unit(100,'nanogram/microliter'),
     Antibiotic.spc: Unit(50,'nanogram/microliter'),
 }
