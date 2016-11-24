@@ -52,9 +52,9 @@ def amplify_and_freeze_bacteria(p, source_bacteria_well,
     
     p.uncover(growth_plate)
     
-    p.absorbance(growth_plate, growth_wells.indices(),
-                 wavelength="600:nanometer",
-                 dataref='cell_density_600nm_absorbance', flashes=25)
+    p.measure_bacterial_density(growth_wells,
+                               one_tip=True, 
+                               mix_before=True)
     
     mix_well2 =  p.ref('temp_mix_tube2', cont_type='micro-1.5',
                        discard=True).well(0)    
