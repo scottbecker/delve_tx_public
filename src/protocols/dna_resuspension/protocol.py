@@ -12,42 +12,52 @@ PROPERTIES_TO_COPY = ['Concentration (DNA)',
 def main(p, params):    
     assert isinstance(p, Protocol)
     
-    dna_tube = params["dna_tube"]
+    dna_wells = params["dna_wells"]
     
     if params.get('send_to_80C',False):
-        assert isinstance(dna_tube,Container)
+        for dna_well in dna_wells:
+            dna_well.container.set_storage(Temperature.cold_80.name)
     
-    dna_tube.set_storage(Temperature.cold_80.name)
+    containers = set([well.container for well in dna_wells])
+    
+    assert len(containers)==1, 'we allow wells from one container at a time'
+    container = list(containers)[0]
     
     #Centrifuge the tube for 3-5 sec at a minimum of 3000 x g to pellet the material to the bottom of the tube.
-    p.spin(dna_tube, '3000:g', '5:second')
+    p.spin(container, '3000:g', '10:second')
     
     #Add 500uL TE (to reach 1 ng/uL)
-    p.provision_by_name('te', dna_tube.well(0), ul(params.get('resuspension_volume_uL',500)))
+    p.provision_by_name('te', dna_wells, ul(params.get('resuspension_volume_uL',500)))
     
     #Briefly vortex (here we have to use mix) and centrifuge
     
-    p.mix(dna_tube.well(0))
+    p.mix(dna_wells)
     
-    p.spin(dna_tube, '3000:g', '3:second')    
+    p.spin(container, '3000:g', '3:second')    
     
-    p.mix(dna_tube.well(0))
+    p.mix(dna_wells)
     
     if params.get('measure_concentration'):
-        p.measure_concentration(dna_tube.well(0), 'dna_concentration', 'DNA', ul(2))
+        p.measure_concentration(dna_wells, 'dna_concentration', 'DNA', ul(2))
     
     if params.get('split_tubes'):
         
         #create a separate container and take half to be used for other experiments
+
+        new_container = p.ref('%s_2'%container.name,cont_type=container.container_type,
+                              storage=Temperature.cold_4.name)
         
-        new_dna_tube = p.ref('%s_2'%dna_tube.name,cont_type=dna_tube.container_type,
-              storage=Temperature.cold_4.name).well(0)
+
+        for dna_well in dna_wells:
         
-        p.transfer(dna_tube.well(0), new_dna_tube, dna_tube.well(0).volume / 2)
-        
-        for property_name in PROPERTIES_TO_COPY:
-            if dna_tube.well(0).properties.get(property_name):
-                set_property(new_dna_tube, property_name, dna_tube.well(0).properties[property_name])
+            new_dna_well = new_container.well(dna_well.index)
+            new_dna_well.name = dna_well.name
+            
+            p.transfer(dna_well, new_dna_well, dna_well.volume / 2)
+            
+            for property_name in PROPERTIES_TO_COPY:
+                if dna_well.properties.get(property_name):
+                    set_property(new_dna_well, property_name, dna_well.properties[property_name])
     
     
 if __name__ == '__main__':

@@ -1,0 +1,31 @@
+{
+                "refs": {
+                    "dna_plate": {
+                        "cover": null, 
+                        "label": "dna_plate", 
+                        "aliquots": {
+                            "0": {
+                                "volume": "0.0:microliter", 
+                                "name": null, 
+                                "properties": {}
+                            },
+                            "12": {
+                                "volume": "0.0:microliter", 
+                                "name": null, 
+                                "properties": {}
+                            }
+                        }, 
+                        "type": "96-pcr", 
+                        "id": "ct19nvrxdpkn67", 
+                        "store": "cold_4"
+                    }
+                }, 
+                "parameters": {
+                    "split_tubes": true, 
+                    "test_mode": false, 
+                    "dna_wells": ["dna_plate/0","dna_plate/12"],
+                    "resuspension_volume_uL": 50, 
+                    "measure_concentration": true,
+                    "send_to_80C": true
+                }
+            }
