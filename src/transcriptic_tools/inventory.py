@@ -44,7 +44,7 @@ def get_transcriptic_inventory():
         Reagent.dntp_10mM:'rs186wj7fvknsr',
         Reagent.cutsmart_buffer_10x: 'rs17ta93g3y85t',
         Reagent.hindiii: 'rs18nw6kpnp44v',
-        Reagent.sali: 'rs18nw6kpnp44v',
+        Reagent.sali: 'rs18y5qx47z4v2',
         Reagent.t4_polynucleotide_kinase:'rs16pc9rd5hsf6', #thermo
         Reagent.t4_polynucleotide_kinase_buffer_a_10x:'rs16pc9rd5sg5d',
         Reagent.atp_100mM: 'rs16pccshb6cb4',
