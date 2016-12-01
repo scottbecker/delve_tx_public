@@ -11,6 +11,8 @@
                 }, 
                 "container_type": {
                     "default": "micro-2.0", 
+                    "description": "Type of container", 
+                    "type": "choice", 
                     "options": [
                         {
                             "name": "micro-2.0", 
@@ -37,12 +39,12 @@
                             "value": "96-flat"
                         }
                     ], 
-                    "type": "choice", 
-                    "description": "Type of container", 
                     "label": "Container Type"
                 }, 
                 "storage_conditions": {
                     "default": "cold_80", 
+                    "description": "", 
+                    "type": "choice", 
                     "options": [
                         {
                             "name": "cold_80", 
@@ -65,8 +67,6 @@
                             "value": "warm_37"
                         }
                     ], 
-                    "type": "choice", 
-                    "description": "", 
                     "label": "Container Storage"
                 }, 
                 "container_name": {
@@ -77,7 +77,7 @@
                 }
             }, 
             "name": "CreateWaterContainer", 
-            "version": "1.1.139", 
+            "version": "1.1.141", 
             "command_string": "python -m protocols.create_water_container.protocol", 
             "preview": {
                 "refs": {}, 
@@ -132,7 +132,7 @@
                 }
             }, 
             "description": "Add TE to a tube with DNA, mix, measure concentration, and optionally split the tube (-80C) into a 4C storage working stock", 
-            "version": "1.1.149", 
+            "version": "1.1.151", 
             "command_string": "python -m protocols.dna_resuspension.protocol", 
             "additional_previews": [
                 {
@@ -218,8 +218,6 @@
                 }, 
                 "antibiotic": {
                     "default": "cell_line", 
-                    "description": "Which antibiotic to use", 
-                    "type": "choice", 
                     "options": [
                         {
                             "name": "cell line defined", 
@@ -242,12 +240,12 @@
                             "value": "spc"
                         }
                     ], 
+                    "type": "choice", 
+                    "description": "Which antibiotic to use", 
                     "label": "Antibiotic"
                 }, 
                 "second_antibiotic": {
                     "default": "None", 
-                    "description": "Add a 2nd antibiotic", 
-                    "type": "choice", 
                     "options": [
                         {
                             "name": "None", 
@@ -266,6 +264,8 @@
                             "value": "kan"
                         }
                     ], 
+                    "type": "choice", 
+                    "description": "Add a 2nd antibiotic", 
                     "label": "Second Antibiotic"
                 }, 
                 "bacteria_well": {
@@ -274,7 +274,7 @@
                 }
             }, 
             "name": "BacteriaFreezing", 
-            "version": "1.0.81", 
+            "version": "1.0.83", 
             "command_string": "python -m protocols.bacteria_freezing.protocol", 
             "additional_previews": [
                 {
@@ -341,8 +341,6 @@
                 }, 
                 "antibiotic": {
                     "default": "cell_line", 
-                    "description": "Which antibiotic to use", 
-                    "type": "choice", 
                     "options": [
                         {
                             "name": "cell line defined", 
@@ -357,6 +355,8 @@
                             "value": "kan"
                         }
                     ], 
+                    "type": "choice", 
+                    "description": "Which antibiotic to use", 
                     "label": "Antibiotic"
                 }, 
                 "test_mode": {
@@ -379,7 +379,7 @@
                 }
             }, 
             "name": "BacteriaPelleting", 
-            "version": "1.0.51", 
+            "version": "1.0.53", 
             "command_string": "python -m protocols.bacteria_pelleting.protocol", 
             "additional_previews": [
                 {
@@ -463,8 +463,6 @@
                 }, 
                 "antibiotic": {
                     "default": "N/A", 
-                    "description": "Which antibiotic to use", 
-                    "type": "choice", 
                     "options": [
                         {
                             "name": "N/A", 
@@ -479,6 +477,8 @@
                             "value": "kan"
                         }
                     ], 
+                    "type": "choice", 
+                    "description": "Which antibiotic to use", 
                     "label": "Antibiotic"
                 }, 
                 "transform_spread_pick": {
@@ -495,7 +495,7 @@
                 }
             }, 
             "description": "Anneal two oligos together and then ligate to a linearized vector. Vector must have 'Concentration (DNA)' property like '4.0:nanograms/microliter'", 
-            "version": "1.0.71", 
+            "version": "1.0.73", 
             "command_string": "python -m protocols.anneal_oligos_and_ligate_to_vector.protocol", 
             "additional_previews": [
                 {
@@ -630,8 +630,6 @@
                 }, 
                 "antibiotic": {
                     "default": "cell_line", 
-                    "description": "Which antibiotic to use", 
-                    "type": "choice", 
                     "options": [
                         {
                             "name": "cell line defined", 
@@ -654,6 +652,8 @@
                             "value": "spc"
                         }
                     ], 
+                    "type": "choice", 
+                    "description": "Which antibiotic to use", 
                     "label": "Antibiotic"
                 }, 
                 "bacteria_well": {
@@ -697,7 +697,7 @@
                 }
             }, 
             "name": "Miniprep", 
-            "version": "1.0.38", 
+            "version": "1.0.40", 
             "command_string": "python -m protocols.miniprep.protocol", 
             "additional_previews": [
                 {

@@ -3303,7 +3303,7 @@ class CustomProtocol(Protocol):
         
         experimental_pcr_well = pcr_plate.wells(["A1"])[0]
         experimental_pcr_well.name = product_name     
-        experimental_pcr_well.properties['dna_length'] = str(product_length)
+        set_property(experimental_pcr_well,'dna_length',product_length)
         
         pcr_wells = [experimental_pcr_well]
         
