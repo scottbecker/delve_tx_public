@@ -3498,14 +3498,22 @@ class CustomProtocol(Protocol):
         
     def linearize_dna(self, vector_source_well,
                       negative_control=True,
-                      gel_verify=True):        
+                      gel_verify=True,
+                      discard=False):        
         """
         
         Cuts a vector with hindiii and sali.  
         @TODO: update this method to take enzymes and dynamically generate protocol from http://nebcloner.neb.com/#!/redigest
         
         """
-        pcr_plate  = self.ref("linearized_%s"%vector_source_well.name,  cont_type="96-pcr", storage=Temperature.cold_4)
+        
+        if discard:
+            storage = None
+        else:
+            storage = Temperature.cold_4
+        
+        pcr_plate  = self.ref("linearized_%s"%vector_source_well.name,  cont_type="96-pcr", storage=storage,
+                              discard=discard)
         experiment_well = pcr_plate.well(0)        
         experiment_well.name = "linearized_%s"%vector_source_well.name
         
