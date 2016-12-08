@@ -16,6 +16,8 @@ Handy test protocol to mimick reagent containers in test mode by making a contai
 Anneal two oligos together and then ligate to a linearized vector. Vector must have 'Concentration (DNA)' property like '4.0:nanograms/microliter'. Includes the ability to optionally run a transform, spread, and pick afterwards (same protocol as the Transcriptic version).
 ###Miniprep
 More powerful miniprep than built in transcriptic version. Ability to set incubation time. Ability to 8x concentrate DNA (slow growht). Ability to induce high copy number in BAC.
+###GelPurify
+Gel Purify a well with dna inside (e.g. after a PCR product). Well must have a dna_length property (used for determining which band to extract).
 
 ## Running protocols from the command line (requires unix)
 
