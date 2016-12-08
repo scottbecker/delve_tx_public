@@ -17,7 +17,7 @@ Anneal two oligos together and then ligate to a linearized vector. Vector must h
 ###Miniprep
 More powerful miniprep than built in transcriptic version. Ability to set incubation time. Ability to 8x concentrate DNA (slow growht). Ability to induce high copy number in BAC.
 ###GelPurify
-Gel Purify a well with dna inside (e.g. after a PCR product). Well must have a dna_length property (used for determining which band to extract).
+Gel Purify a well with dna inside (e.g. after a PCR product). Includes concentration and purity measurement. Well must have a dna_length property (used for determining which band to extract).
 
 ## Running protocols from the command line (requires unix)
 
