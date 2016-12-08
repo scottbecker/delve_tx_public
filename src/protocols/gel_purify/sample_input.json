@@ -1,0 +1,25 @@
+{
+                "refs": {
+                    "plate1": {
+                        "cover": null, 
+                        "label": "plate1", 
+                        "aliquots": {
+                            "0": {
+                                "volume": "15.0:microliter", 
+                                "name": "gene1", 
+                                "properties": {
+									"dna_length": "900"
+								}
+                            }
+                        }, 
+                        "type": "96-pcr", 
+                        "id": "ct19jasu8xzqez", 
+                        "store": "cold_4"
+                    }
+                }, 
+                "parameters": {
+                    "source_dna": ["plate1/0"],
+                    "test_mode": true, 
+                    "measure_concentration": true
+                }
+            }

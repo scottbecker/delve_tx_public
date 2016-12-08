@@ -295,11 +295,11 @@
                         }
                     }, 
                     "parameters": {
+                        "destroy_source_tube": true, 
                         "antibiotic": "cell_line", 
                         "test_mode": true, 
                         "second_antibiotic": "strep", 
-                        "bacteria_well": "bacteria_tube/0", 
-                        "destroy_source_tube": true
+                        "bacteria_well": "bacteria_tube/0"
                     }
                 }
             ], 
@@ -321,11 +321,11 @@
                     }
                 }, 
                 "parameters": {
+                    "destroy_source_tube": false, 
                     "antibiotic": "cam", 
                     "test_mode": true, 
                     "second_antibiotic": "None", 
-                    "bacteria_well": "bacteria_tube/0", 
-                    "destroy_source_tube": false
+                    "bacteria_well": "bacteria_tube/0"
                 }
             }, 
             "description": "Take bacteria from a well, amplify it, freeze 10 tubes w/ 115ul each of it. Requires tubes to have a property cell_line_name with the name of the bacteria cell line."
@@ -618,6 +618,94 @@
                 }
             }, 
             "name": "AnnealOligosAndLigateToVector"
+        }, 
+        {
+            "inputs": {
+                "source_dna": {
+                    "type": "aliquot+", 
+                    "description": "make sure that the well or container has the product name as its name and has dna_length property", 
+                    "label": "DNA wells to Purify"
+                }, 
+                "test_mode": {
+                    "default": true, 
+                    "required": true, 
+                    "type": "bool", 
+                    "description": "Set this to checked if this is a test run", 
+                    "label": "Is this a test run?"
+                }, 
+                "measure_concentration": {
+                    "default": true, 
+                    "required": true, 
+                    "type": "bool", 
+                    "label": "Measure Concentration with 2ul of product?"
+                }
+            }, 
+            "description": "Gel Purify a well with dna inside. Well must have a dna_length property", 
+            "version": "1.0.67", 
+            "command_string": "python -m protocols.gel_purify.protocol", 
+            "additional_previews": [], 
+            "preview": {
+                "refs": {
+                    "tube3": {
+                        "cover": null, 
+                        "label": "oligo1_tube", 
+                        "aliquots": {
+                            "0": {
+                                "volume": "100.0:microliter", 
+                                "name": "gene3", 
+                                "properties": {
+                                    "dna_length": "900"
+                                }
+                            }
+                        }, 
+                        "type": "micro-2.0", 
+                        "id": "ct19gm27cjdvrk", 
+                        "store": "cold_4"
+                    }, 
+                    "tube2": {
+                        "cover": null, 
+                        "label": "oligo2_tube", 
+                        "aliquots": {
+                            "0": {
+                                "volume": "100.0:microliter", 
+                                "name": "gene2", 
+                                "properties": {
+                                    "dna_length": "800"
+                                }
+                            }
+                        }, 
+                        "type": "micro-2.0", 
+                        "id": "ct19gm27ck5yt9", 
+                        "store": "cold_4"
+                    }, 
+                    "tube1": {
+                        "cover": null, 
+                        "label": "template_well", 
+                        "aliquots": {
+                            "0": {
+                                "volume": "2000.0:microliter", 
+                                "name": "gene1", 
+                                "properties": {
+                                    "dna_length": "1400"
+                                }
+                            }
+                        }, 
+                        "type": "micro-2.0", 
+                        "id": "ct19gkzvxxk5ku", 
+                        "store": "cold_4"
+                    }
+                }, 
+                "parameters": {
+                    "source_dna": [
+                        "tube1/0", 
+                        "tube2/0", 
+                        "tube3/0"
+                    ], 
+                    "test_mode": true, 
+                    "measure_concentration": true
+                }
+            }, 
+            "name": "GelPurify"
         }, 
         {
             "inputs": {
