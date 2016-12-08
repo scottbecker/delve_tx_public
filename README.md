@@ -21,6 +21,8 @@ Gel Purify a well with dna inside (e.g. after a PCR product). Includes concentra
 ###PCR
 Run PCR of a DNA template with two primers. Uses Q5 polymerase. Template well must have 'Concentration (DNA)' property like '4.0:nanograms/microliter'.
 
+Use the NEB Tm calculator to determine the annealing temperature of your sequence - http://tmcalculator.neb.com/#!/
+
 ## Running protocols from the command line (requires unix)
 
 
