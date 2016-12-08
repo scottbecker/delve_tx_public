@@ -1,0 +1,48 @@
+{
+            "refs": {
+                "replated_cells_1": {
+                    "cover": "universal",
+                    "label": "replated_cells_1",
+                    "aliquots": {
+                        "0": {
+                            "volume": "3000.0:microliter",
+                            "name": null,
+                            "properties": {}
+                        },
+						"1": {
+                            "volume": "3000.0:microliter",
+                            "name": null,
+                            "properties": {}
+                        },
+						"2": {
+                            "volume": "3000.0:microliter",
+                            "name": null,
+                            "properties": {}
+                        },
+						"3": {
+                            "volume": "3000.0:microliter",
+                            "name": null,
+                            "properties": {}
+                        },
+						"4": {
+                            "volume": "3000.0:microliter",
+                            "name": null,
+                            "properties": {}
+                        },
+						"5": {
+                            "volume": "3000.0:microliter",
+                            "name": null,
+                            "properties": {}
+                        }
+                    },
+                    "type": "6-flat",
+                    "id": "ct198z3gc62jbn",
+                    "store": "warm_37"
+                }
+            },
+            "parameters": {
+                "cell_plate": "replated_cells_1",
+                "cells_in_test_sample": 266666,
+                "test_mode": true
+            }
+        }

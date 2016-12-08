@@ -621,6 +621,178 @@
         }, 
         {
             "inputs": {
+                "template_well": {
+                    "required": true, 
+                    "type": "aliquot", 
+                    "label": "Well with template dna"
+                }, 
+                "test_mode": {
+                    "default": true, 
+                    "required": true, 
+                    "type": "bool", 
+                    "description": "Set this to checked if this is a test run", 
+                    "label": "Is this a test run?"
+                }, 
+                "oligo2_tube": {
+                    "required": true, 
+                    "type": "container", 
+                    "label": "Tube with 10uM Oligo2"
+                }, 
+                "product_length": {
+                    "required": true, 
+                    "type": "integer", 
+                    "label": "Length of the PCR product in bp"
+                }, 
+                "annealing_temp_c": {
+                    "required": true, 
+                    "type": "decimal", 
+                    "label": "Annealing Temp in C"
+                }, 
+                "oligo1_tube": {
+                    "required": true, 
+                    "type": "container", 
+                    "label": "Tube with 10uM Oligo1"
+                }, 
+                "greater_than_65_percent_gc": {
+                    "required": true, 
+                    "type": "bool", 
+                    "label": "Does either primer have >=65% GC content?"
+                }, 
+                "product_name": {
+                    "required": true, 
+                    "type": "string", 
+                    "label": "Product Name"
+                }
+            }, 
+            "description": "Run PCR of a DNA template with two primers. Template must have 'Concentration (DNA)' property like '4.0:nanograms/microliter'", 
+            "version": "1.0.71", 
+            "command_string": "python -m protocols.pcr.protocol", 
+            "additional_previews": [
+                {
+                    "refs": {
+                        "template_tube": {
+                            "cover": null, 
+                            "label": "template_well", 
+                            "aliquots": {
+                                "0": {
+                                    "volume": "2000.0:microliter", 
+                                    "name": null, 
+                                    "properties": {}
+                                }
+                            }, 
+                            "type": "micro-2.0", 
+                            "id": "ct19gkzvxxk5ku", 
+                            "store": "cold_80"
+                        }, 
+                        "oligo2_tube": {
+                            "cover": null, 
+                            "label": "oligo2_tube", 
+                            "aliquots": {
+                                "0": {
+                                    "volume": "100.0:microliter", 
+                                    "name": null, 
+                                    "properties": {
+                                        "Concentration": "10uM"
+                                    }
+                                }
+                            }, 
+                            "type": "micro-2.0", 
+                            "id": "ct19gm27ck5yt9", 
+                            "store": "cold_4"
+                        }, 
+                        "oligo1_tube": {
+                            "cover": null, 
+                            "label": "oligo1_tube", 
+                            "aliquots": {
+                                "0": {
+                                    "volume": "100.0:microliter", 
+                                    "name": null, 
+                                    "properties": {
+                                        "Concentration": "10uM"
+                                    }
+                                }
+                            }, 
+                            "type": "micro-2.0", 
+                            "id": "ct19gm27cjdvrk", 
+                            "store": "cold_4"
+                        }
+                    }, 
+                    "parameters": {
+                        "template_well": "template_tube/0", 
+                        "test_mode": true, 
+                        "oligo2_tube": "oligo2_tube", 
+                        "product_length": 2000, 
+                        "annealing_temp_c": 65, 
+                        "oligo1_tube": "oligo1_tube", 
+                        "greater_than_65_percent_gc": true, 
+                        "product_name": "gal4p65"
+                    }
+                }
+            ], 
+            "preview": {
+                "refs": {
+                    "template_tube": {
+                        "cover": null, 
+                        "label": "template_well", 
+                        "aliquots": {
+                            "0": {
+                                "volume": "2000.0:microliter", 
+                                "name": null, 
+                                "properties": {}
+                            }
+                        }, 
+                        "type": "micro-2.0", 
+                        "id": "ct19gkzvxxk5ku", 
+                        "store": "cold_80"
+                    }, 
+                    "oligo2_tube": {
+                        "cover": null, 
+                        "label": "oligo2_tube", 
+                        "aliquots": {
+                            "0": {
+                                "volume": "100.0:microliter", 
+                                "name": null, 
+                                "properties": {
+                                    "Concentration": "10uM"
+                                }
+                            }
+                        }, 
+                        "type": "micro-2.0", 
+                        "id": "ct19gm27ck5yt9", 
+                        "store": "cold_4"
+                    }, 
+                    "oligo1_tube": {
+                        "cover": null, 
+                        "label": "oligo1_tube", 
+                        "aliquots": {
+                            "0": {
+                                "volume": "100.0:microliter", 
+                                "name": null, 
+                                "properties": {
+                                    "Concentration": "10uM"
+                                }
+                            }
+                        }, 
+                        "type": "micro-2.0", 
+                        "id": "ct19gm27cjdvrk", 
+                        "store": "cold_4"
+                    }
+                }, 
+                "parameters": {
+                    "template_well": "template_tube/0", 
+                    "test_mode": true, 
+                    "oligo2_tube": "oligo2_tube", 
+                    "product_length": 2000, 
+                    "annealing_temp_c": 65, 
+                    "oligo1_tube": "oligo1_tube", 
+                    "greater_than_65_percent_gc": false, 
+                    "product_name": "gal4p65"
+                }
+            }, 
+            "name": "PCR"
+        }, 
+        {
+            "inputs": {
                 "source_dna": {
                     "type": "aliquot+", 
                     "description": "make sure that the well or container has the product name as its name and has dna_length property", 
