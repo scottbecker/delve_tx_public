@@ -2,11 +2,11 @@ from __future__ import print_function
 import unittest
 from datadiff import diff
 from transcriptic_tools.utils import (ul, ml, get_well_max_volume, get_well_dead_volume,
-                                      hours, get_column_wells)
+                                      hours, get_column_wells, set_property)
 from test_utils import create_blank_plate
 from transcriptic_tools.custom_protocol import CustomProtocol as Protocol
 from autoprotocol.instruction import Provision, Incubate, Cover, Dispense, Absorbance
-from transcriptic_tools.enums import Reagent, Antibiotic
+from transcriptic_tools.enums import Reagent, Antibiotic, Temperature
 
 class TestCustomProtocol(unittest.TestCase):
     maxDiff = None
@@ -1082,7 +1082,7 @@ class TestCustomProtocol(unittest.TestCase):
                          mix_before=True
                          )
             
-            self.assertEqual(p.as_dict(seal_on_store=False),
+            self.assertDictContainsSubset(
                              {
                                  'refs': {
                                      'my_plate2': {
@@ -1185,7 +1185,8 @@ class TestCustomProtocol(unittest.TestCase):
                                      }],
                                      'op': 'pipette'
                                  }]
-                             }
+                             },
+                             p.as_dict(seal_on_store=False)
                              )
         
         
@@ -1634,4 +1635,25 @@ class TestCustomProtocol(unittest.TestCase):
         
     def test_stamp_zero_volume(self):
         p = Protocol()
+        #@TODO: stamp should automatically convert from zero volume with mix to xfer the mix volume and use one less mix
         
+        
+    def test_freeze_thaw_cycle_management(self):
+        p = Protocol()
+        
+        tube1 = p.ref('test tube', cont_type='micro-1.5', id='ct19nvhf4m5brp', storage=Temperature.cold_80)
+        tube1.well(0).volume = ul(10)
+        
+        tube2 = p.ref('test tube 2', cont_type='micro-1.5', id='ct19nvhf4m5brp', storage=Temperature.cold_20)
+        tube2.well(0).volume = ul(10)        
+        set_property(tube2.well(0), 'freeze_thaw_cycles','1')
+                     
+        new_tube = p.ref('new tube', cont_type='micro-1.5', storage=Temperature.cold_80)
+        new_tube.well(0).volume = ul(10)
+        
+        protocol_dict = p.as_dict()
+        
+        self.assertEqual(protocol_dict['outs']['test tube']['0']['properties']['freeze_thaw_cycles'],'1')
+        self.assertEqual(protocol_dict['outs']['test tube 2']['0']['properties']['freeze_thaw_cycles'],'2')
+        
+        self.assertEqual(protocol_dict['outs']['new tube']['0']['properties']['freeze_thaw_cycles'],'0')

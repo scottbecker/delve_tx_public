@@ -77,7 +77,7 @@ class Reagent(CustomEnum):
     zymo_dh5a = 57
     soc_medium = 58
     
-    #next number is 60
+    peg_6000_24percent = 60
     
     
     

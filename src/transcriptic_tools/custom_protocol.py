@@ -829,6 +829,8 @@ class CustomProtocol(Protocol):
                 number of times to aspirate and expell liquid during mixing
             one_tip : bool
                 mix all wells with a single tip
+            mix_seconds: int
+                total time for a single mix aspirate and dispense cycle
         
             """   
             
@@ -2141,8 +2143,8 @@ class CustomProtocol(Protocol):
     def _get_final_protocol(self):
 
         #if everything is provisioned, then this protocol is the final protocol
-        if all([volume==ul(0) for volume in self.unprovisioned_stock_reagent_volumes.values()]):
-            return self
+        #if all([volume==ul(0) for volume in self.unprovisioned_stock_reagent_volumes.values()]):
+            #return self
         
         #we have unprovisioned reagent
         
@@ -2179,6 +2181,48 @@ class CustomProtocol(Protocol):
         for ref_name,ref in self.refs.items():
             if ref_name not in [reagent.name for reagent in self.unprovisioned_stock_reagent_volumes.keys()]:
                 p.refs[ref_name] = ref
+                
+        #update refs to have the correct freeze thaw count
+        
+        for ref in p.refs.values():
+            new_container = not ref.opts.get('id')
+
+            #freeze/thaw only applies to frozen containers
+            if not ref.opts.get('store') or ref.opts['store'].get('where') not in ['cold_20','cold_80']: continue
+            
+            for well in ref.container.all_wells():
+                #ignore 0 volume wells
+                if not well.volume or well.volume == ul(0): continue
+                freeze_thaw_cycles = 0
+                if 'freeze_thaw_cycles' in well.properties:
+                    freeze_thaw_cycles = int(well.properties['freeze_thaw_cycles'])
+                    
+                if not new_container:
+                    freeze_thaw_cycles+=1
+                else:
+                    well.properties['freeze_thaw_cycles'] = '0'
+                    continue
+                
+                if not getattr(p,'outs',{}):
+                    p.outs = {}
+                
+                #these lines ensure there is an out
+                if ref.container.name not in p.outs:
+                    p.outs[ref.container.name] = {str(well.index):{'properties':{}}}
+                    
+                if str(well.index) not in p.outs[ref.container.name]:
+                    p.outs[ref.container.name][str(well.index)] = {'properties':{}}
+                    
+                if 'properties' not in p.outs[ref.container.name][str(well.index)]:
+                    p.outs[ref.container.name][str(well.index)]['properties'] = {}
+                    
+                p.outs[ref.container.name][str(well.index)]['properties']['freeze_thaw_cycles'] = str(freeze_thaw_cycles)
+                
+                
+            
+            
+                
+                
              
         return p
     
@@ -3065,6 +3109,8 @@ class CustomProtocol(Protocol):
         
         assert isinstance(source_container,Container)
         
+        if name_postfix:
+            name_postfix = "_"+name_postfix
         
         
         measurement_name = 'absorbance_%s%s'%(self.absorbance_measurement_count,name_postfix)
@@ -3074,7 +3120,7 @@ class CustomProtocol(Protocol):
             transfer_to_absorbance_plate = True
             
         else:
-            assert not blanking_antibiotic, "blanking antibiotic only used with non 96-flat containers"
+            assert not blanking_antibiotic, "blanking antibiotic can only used with non 96-flat containers"
     
         if transfer_to_absorbance_plate:    
     
@@ -3136,7 +3182,8 @@ class CustomProtocol(Protocol):
                 
                 self.add_antibiotic(media_blank_well, 
                                     blanking_antibiotic,
-                                    total_volume_to_add_including_broth=ul(100))
+                                    total_volume_to_add_including_broth=ul(100),
+                                    mix_after=True)
                 
                 wells.extend(blanking_column_wells)
                 

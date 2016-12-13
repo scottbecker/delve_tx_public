@@ -46,13 +46,15 @@ def get_transcriptic_inventory():
         Reagent.hindiii: 'rs18nw6kpnp44v',
         Reagent.sali: 'rs18y5qx47z4v2',
         Reagent.t4_polynucleotide_kinase:'rs16pc9rd5hsf6', #thermo
-        Reagent.t4_polynucleotide_kinase_buffer_a_10x:'rs16pc9rd5sg5d',
+        Reagent.t4_polynucleotide_kinase_buffer_a_10x:'rs16pc9rd5sg5d', #thermo
         Reagent.atp_100mM: 'rs16pccshb6cb4',
         
         Reagent.pUC19_1ug_per_ul       : 'rs17tcqmncjfsh', # catalog; pUC19; cold_20    
         Reagent.pHSG298_500ng_per_ul     : 'rs18rx5pyh6fku',
         Reagent.pUC19_100pg_per_ul: 'rs18rx59spw2t8',
         Reagent.pHSG298_100pg_per_ul: 'rs18rx6a44qss7',
+        
+        Reagent.peg_6000_24percent: 'rs16pc9rd68sdt', #thermo
         
         
         

@@ -460,7 +460,7 @@ def get_column_wells(container, column_index_or_indexes):
         for column_index in column_index_or_indexes:
             result+=get_column_wells(container, column_index)
             
-        return result
+        return WellGroup(result)
     
     column_index = column_index_or_indexes
     

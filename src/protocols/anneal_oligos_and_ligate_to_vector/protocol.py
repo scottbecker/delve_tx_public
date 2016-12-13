@@ -43,8 +43,11 @@ def anneal_oligos_and_ligate_to_vector(p, oligo1_tube, oligo2_tube,
     
     #prep annealing, 20uL total
     #see instructions on p1 here: https://www.addgene.org/static/data/plasmids/60/60958/60958-attachment_wWVpb-8u9Mzp.pdf
+    peg_volume = ul(4)
+    total_volume = ul(20)
     
-    p.provision_by_name(Reagent.water, anneal_well, ul(14))
+    p.provision_by_name(Reagent.water, anneal_well, ul(10))
+    p.provision_by_name(Reagent.peg_6000_24percent, anneal_well, peg_volume)
     p.provision_by_name(Reagent.t4_polynucleotide_kinase_buffer_a_10x, anneal_well, ul(2))
     p.provision_by_name(Reagent.t4_polynucleotide_kinase, anneal_well, ul(1))
     #atp hasn't been mixed yet
@@ -53,7 +56,7 @@ def anneal_oligos_and_ligate_to_vector(p, oligo1_tube, oligo2_tube,
                mix_after=True)
     
     
-    assert anneal_well.volume == ul(20)
+    assert anneal_well.volume == total_volume
     
     p.incubate(reaction_plate, Temperature.warm_37, '30:minute', shaking=False)
     
