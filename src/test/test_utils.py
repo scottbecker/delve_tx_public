@@ -4,7 +4,7 @@ import string
 import unittest
 from transcriptic_tools import utils
 from autoprotocol import Unit
-from transcriptic_tools.utils import ul, ml
+from transcriptic_tools.utils import ul, ml, uM
 from autoprotocol import Container
 from autoprotocol.container_type import _CONTAINER_TYPES
 from uuid import uuid4
@@ -242,4 +242,24 @@ class TestUtils(unittest.TestCase):
         
         
         
+    def test_convert_string_to_unit(self):
+        self.assertEqual(utils.convert_string_to_unit('100uM'),
+                         Unit('100:uM'))
         
+        self.assertEqual(utils.convert_string_to_unit('100:uM'),
+                         Unit('100:uM'))    
+        
+        self.assertEqual(utils.convert_string_to_unit('100nanogram/microliter'),
+                         Unit('100:nanogram/microliter'))              
+        
+        
+    def test_get_diluent_volume(self):
+        
+        self.assertEqual(utils.get_diluent_volume(uM(100), 
+                                                 ul(45), 
+                                                 uM(10)), ul(5))
+        
+        
+        self.assertEqual(utils.get_diluent_volume(uM(250), 
+                                                  ul(120), 
+                                                  uM(10)), ul(5))        

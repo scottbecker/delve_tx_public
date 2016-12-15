@@ -6,8 +6,10 @@ Derived from Brian Naughton @ http://blog.booleanbiotech.com/genetic_engineering
 from __future__ import print_function
 import datetime
 import math
+import re
 import autoprotocol
 from autoprotocol import Unit
+from autoprotocol.unit import UnitValueError
 from autoprotocol.container import Container
 from autoprotocol.container_type import _CONTAINER_TYPES, ContainerType
 from autoprotocol.protocol import Protocol, WellGroup, Well
@@ -683,7 +685,26 @@ def calculate_dilution_volume(start_concentration, final_concentration, final_vo
     
     return start_volume.to('microliter') 
     
+UNIT_RE = re.compile('^(\d+\.?\d{0,2})([\w\/]+)$')
+def convert_string_to_unit(s):
+    """Handles malformated strings like 10uM"""
+    
+    if ":" not in s:
+        match  = UNIT_RE.match(s)
+        if match:
+            s = "%s:%s"%match.groups()
+    
+    return Unit(s)
 
+
+def get_diluent_volume(starting_concentration, dilutant_volume, desired_concentration):
+    
+    if desired_concentration > starting_concentration:
+        raise Exception('starting concentration must be higher than desired concentration in a dilution')
+    
+    dilution_multiple = (starting_concentration.to('uM') / desired_concentration).magnitude
+    diluent_volume = round_volume(dilutant_volume / (dilution_multiple - 1),2) 
+    return diluent_volume
 
 
 class InvalidContainerStateException(Exception):

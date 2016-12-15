@@ -20,7 +20,8 @@ from transcriptic_tools.utils import (ul, get_well_dead_volume,
                                       set_property, ceil_volume, init_inventory_well,
                                       touchdown_pcr, convert_stamp_shape_to_wells,
                                       convert_mass_to_volume, ug, round_volume,
-                                      calculate_dilution_volume, mM, uM, copy_cell_line_name, copy_well_names)
+                                      calculate_dilution_volume, mM, uM, copy_cell_line_name, copy_well_names,
+                                      convert_string_to_unit, get_diluent_volume)
 from lib import lists_intersect, get_dict_optional_value, get_melting_temp
 from transcriptic_tools.enums import Reagent, Antibiotic, Temperature
 from instruction import MiniPrep
@@ -3340,7 +3341,7 @@ class CustomProtocol(Protocol):
         
         oligo_wells = [primer1_well,primer2_well]
         
-        assert all([well.properties.get('Concentration') in ['10uM','10.00uM','10.0uM'] for well in oligo_wells]), 'All oligos must be at 10uM'
+        assert all([well.properties.get('Concentration') != None for well in oligo_wells]), 'All oligos must have a Concentration property'
         
         # Temporary tubes for use, then discarded (you can't set storage if you are going to discard)
         mastermix_well = self.ref("mastermix", cont_type="micro-1.5", discard=True).well(0)
@@ -3363,6 +3364,42 @@ class CustomProtocol(Protocol):
         all_inventory_wells = [template_well, primer1_well, primer2_well]
         for well in all_inventory_wells:
             init_inventory_well(well)
+            
+            
+        #convert primer wells to 10uM
+        
+        new_oligo_wells = []
+        
+        for i, oligo_well in enumerate(oligo_wells):
+            oligo_conc = convert_string_to_unit(oligo_well.properties['Concentration'])
+            if  oligo_conc < uM(10):
+                raise Exception('all oligos must have a higher concentration than 10uM. %s has a concentration of %s'%(oligo_well.name,oligo_conc))
+            
+            elif oligo_conc > uM(10):
+                dilution_well = pcr_plate.wells_from('C1', i+1)[-1]
+                dilution_well.name = '%s_10uM_dilution'%oligo_well.name
+                
+                
+                dilutant_volume = ul(45)
+                
+                
+                diluent_volume = get_diluent_volume(oligo_conc, 
+                                                   dilutant_volume, 
+                                                   uM(10))
+                
+                self.provision_by_name(Reagent.te, dilution_well, dilutant_volume)
+                
+                #we will mix when we transfer later, no need to mix now
+                self.transfer(oligo_well, dilution_well, diluent_volume)
+                
+                new_oligo_wells.append(dilution_well)
+            
+        
+            else:
+                new_oligo_wells.append(oligo_well)
+        
+            
+        oligo_wells = new_oligo_wells
     
         # -----------------------------------------------------
         # Q5 PCR protocol
@@ -3397,8 +3434,7 @@ class CustomProtocol(Protocol):
         self.provision_by_name(Reagent.dntp_10mM, mastermix_well, ul(1))
         if greater_than_65_percent_gc_primer:
             self.provision_by_name(Reagent.q5_high_gc_enhancer, mastermix_well, ul(15))
-        self.transfer(primer1_well, mastermix_well, ul(3.75), mix_before=True, mix_after=True)
-        self.transfer(primer2_well, mastermix_well, ul(3.75), mix_before=True, mix_after=True)
+        self.transfer(oligo_wells, mastermix_well, ul(3.75), mix_before=True, mix_after=True)
         
         # Transfer mastermix to pcr_plate without template
         self.transfer(mastermix_well, pcr_wells, ul(24))
