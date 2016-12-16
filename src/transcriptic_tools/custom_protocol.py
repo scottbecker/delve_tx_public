@@ -3225,7 +3225,7 @@ class CustomProtocol(Protocol):
         self.absorbance_measurement_count+=1
     
     
-    def create_agar_plate(self, name,container_type_name,antibiotic=None,discard=False,storage=None):
+    def create_agar_plate(self, name,container_type_name,antibiotic=None,discard=False,storage=Temperature.cold_4):
         
         if isinstance(storage,Temperature):
             storage = storage.name
