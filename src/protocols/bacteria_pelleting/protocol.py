@@ -104,7 +104,7 @@ def pellet_bacteria(p, source_bacteria_well,
         
         p.spin(growth_plate, '4000:g', '5:minute')
         
-        trash_wells = growth_plate.wells_from(4,len(final_growth_wells),columnwise=True)
+        trash_wells = growth_plate.wells_from(4,len(non_top_wells),columnwise=True)
         
         consolidate_volume = ul(250)
         
