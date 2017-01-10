@@ -1487,6 +1487,7 @@ class CustomProtocol(Protocol):
 
         if volume < ul(10):
             for dest_well in dest:
+                mix_kwargs['mix_after'] =  True
                 self.transfer(source,dest_well,volume,
                               aspirate_speed=aspirate_speed, 
                               aspirate_source=aspirate_source, 
@@ -1494,6 +1495,7 @@ class CustomProtocol(Protocol):
                               transit_vol=transit_vol, blowout_buffer=blowout_buffer,
                               tip_type=tip_type, new_group=new_group,
                               ignore_mix_after_warning=ignore_mix_after_warning,
+                              one_tip=allow_carryover,
                               **mix_kwargs)                               
         else:
             
@@ -3075,7 +3077,7 @@ class CustomProtocol(Protocol):
             
             if total_volume_to_add_including_broth:
                 antibiotic_volume = get_well_antibiotic_volume(total_volume_to_add_including_broth)
-                broth_volume = total_volume_to_add_including_broth - antibiotic_volume
+                broth_volume = floor_volume(total_volume_to_add_including_broth - antibiotic_volume)
                 broth_volumes.append(broth_volume)
             else:
                 antibiotic_volume = get_well_antibiotic_volume(well.volume)
