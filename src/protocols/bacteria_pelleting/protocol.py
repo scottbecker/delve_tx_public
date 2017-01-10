@@ -2,7 +2,7 @@ from __future__ import print_function
 from transcriptic_tools.utils import (ul, ml, get_cell_line_name, get_well_max_volume,
                                       copy_cell_line_name, set_property, get_column_wells,
                                       get_volume, get_well_dead_volume, floor_volume,
-                                      round_volume)
+                                      round_volume, get_well_safe_volume)
 
 from transcriptic_tools.harness import run
 from transcriptic_tools import CustomProtocol as Protocol
@@ -40,7 +40,7 @@ def pellet_bacteria(p, source_bacteria_well,
         
     
     if destroy_source_tube:
-        source_volume = get_volume(source_bacteria_well, aspiratable=True)
+        source_volume = get_volume(source_bacteria_well) - get_well_safe_volume(source_bacteria_well)
     else:
         source_volume = ul(50)
     
