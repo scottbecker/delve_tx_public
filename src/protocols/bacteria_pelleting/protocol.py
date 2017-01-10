@@ -111,7 +111,7 @@ def pellet_bacteria(p, source_bacteria_well,
         
         #trash supernatent except consolidate_volume in non top row wells
         
-        p.transfer(final_growth_wells, trash_wells, get_volume(non_top_wells[0],aspiratable=True)-consolidate_volume,
+        p.transfer(non_top_wells, trash_wells, get_volume(non_top_wells[0],aspiratable=True)-consolidate_volume,
                    one_tip=True)
         
         
@@ -122,7 +122,7 @@ def pellet_bacteria(p, source_bacteria_well,
                    one_tip=True)     
         
         #break up pellet in all wells
-        p.mix(final_growth_wells, repetitions=20, one_tip=True)
+        p.mix(non_top_wells, repetitions=20, one_tip=True)
         
         #consolidate into the top row
         for top_well in top_wells:
