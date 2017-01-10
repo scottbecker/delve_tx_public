@@ -46,7 +46,7 @@ def pellet_bacteria(p, source_bacteria_well,
     
     
     #adding antibiotic mixes after by default
-    p.add_antibiotic(growth_wells, antibiotic, total_volume_to_add_including_broth=overnight_volume)
+    p.add_antibiotic(growth_wells, antibiotic, broth_volume=overnight_volume)
     
     p.distribute(source_bacteria_well, growth_wells, round_volume(source_volume / len(growth_wells) * 1.0,2), 
                  allow_carryover=True)

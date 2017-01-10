@@ -3391,8 +3391,8 @@ class CustomProtocol(Protocol):
                 
                 self.provision_by_name(Reagent.te, dilution_well, dilutant_volume)
                 
-                #we will mix when we transfer later, no need to mix now
-                self.transfer(oligo_well, dilution_well, diluent_volume)
+                #mix required for small volumes
+                self.transfer(oligo_well, dilution_well, diluent_volume, mix_after=True)
                 
                 new_oligo_wells.append(dilution_well)
             
