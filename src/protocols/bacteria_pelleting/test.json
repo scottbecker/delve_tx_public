@@ -1,0 +1,25 @@
+{
+                    "refs": {
+                        "bacteria_tube": {
+                            "cover": null, 
+                            "label": "bacteria_tube", 
+                            "aliquots": {
+                                "0": {
+                                    "volume": "115.0:microliter", 
+                                    "name": null, 
+                                    "properties": {}
+                                }
+                            }, 
+                            "type": "micro-2.0", 
+                            "id": "ct19uqq9q75z44", 
+                            "store": "cold_80"
+                        }
+                    }, 
+                    "parameters": {
+                        "induce_high_copy_number": false, 
+                        "destroy_source_tube": true, 
+                        "test_mode": true, 
+                        "antibiotic": "cell_line", 
+                        "bacteria_well": "bacteria_tube/0"
+                    }
+                }

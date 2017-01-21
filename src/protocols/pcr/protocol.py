@@ -5,31 +5,9 @@ from transcriptic_tools.utils import (ul, ml, ng,
 
 from transcriptic_tools.harness import run
 from transcriptic_tools import CustomProtocol as Protocol
+from transcriptic_tools.inventory import get_reagent_by_transcritpic_resource_id
 from transcriptic_tools.enums import Antibiotic, Reagent, Temperature
 
-def run_pcr(p, oligo1_tube, oligo2_tube,
-            template_well,
-            annealing_temp_c,
-            greater_than_65_percent_gc_primer,
-            product_length,
-            product_name,
-            negative_control=True,
-            ):
-    """
-    
-    
-    """
-    
-    
-    #@TODO: update to dynamically detect concentration of primer tubes (currently assumes its 100uM)
-    #@TODO: include option to proceed immediately to spread/transform/pick
-    
-    assert isinstance(p,Protocol)
-   
-    p.pcr(template_well, oligo1_tube.well(0), oligo2_tube.well(0), 
-         annealing_temp_c, greater_than_65_percent_gc_primer,product_length,
-         product_name=product_name)
-    
 
 def main(p, params):    
     """This protocol takes a tube of bacteria, amplifies it, and creates/stores new tubes of frozen cells
@@ -37,12 +15,37 @@ def main(p, params):
     #bacterial protocol
     p.mammalian_cell_mode = False
     
-    run_pcr(p,params['oligo1_tube'],params['oligo2_tube'],params['template_well'],
-                                       params['annealing_temp_c'],
-                                       params['greater_than_65_percent_gc'],
-                                       params['product_length'],
-                                       params['product_name']
-                                       )
+    
+    assert isinstance(p,Protocol)
+    
+    #determine if either primer is a reagent
+    if params['primer_type1']['value'] == 'resource':
+        
+        resource_id = params['primer_type1']['inputs']['resource']['resource_id']
+        
+        primer1_well_or_reagent = get_reagent_by_transcritpic_resource_id(resource_id, fail_if_not_found=True)
+        
+    else:
+        primer1_well_or_reagent = params['primer_type1']['inputs']['custom_inventory']['primer_well']
+        
+    if params['primer_type2']['value'] == 'stock':
+    
+        resource_id = params['primer_type2']['inputs']['stock']['resource_id']
+    
+        primer2_well_or_reagent = get_reagent_by_transcritpic_resource_id(resource_id, fail_if_not_found=True)
+    
+    else:
+        primer2_well_or_reagent = params['primer_type2']['inputs']['custom_inventory']['primer_well']    
+        
+    
+    p.pcr(template_well=params['template_well'],
+          primer1_well_or_reagent = primer1_well_or_reagent,
+          primer2_well_or_reagent = primer2_well_or_reagent,
+          annealing_temp_c = params['annealing_temp_c'],
+          greater_than_65_percent_gc_primer = params['greater_than_65_percent_gc'],
+          product_length = params['product_length'],
+          product_name = params['product_name']
+            )
 
 if __name__ == '__main__':
     run(main, "PCR")

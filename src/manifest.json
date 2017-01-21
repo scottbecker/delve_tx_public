@@ -9,10 +9,39 @@
                     "description": "", 
                     "label": "Volume in Microliters per well"
                 }, 
+                "storage_conditions": {
+                    "default": "cold_80", 
+                    "label": "Container Storage", 
+                    "type": "choice", 
+                    "description": "", 
+                    "options": [
+                        {
+                            "name": "cold_80", 
+                            "value": "cold_80"
+                        }, 
+                        {
+                            "name": "cold_20", 
+                            "value": "cold_20"
+                        }, 
+                        {
+                            "name": "cold_4", 
+                            "value": "cold_4"
+                        }, 
+                        {
+                            "name": "ambient", 
+                            "value": "ambient"
+                        }, 
+                        {
+                            "name": "warm_37", 
+                            "value": "warm_37"
+                        }
+                    ]
+                }, 
                 "container_type": {
                     "default": "micro-2.0", 
-                    "description": "Type of container", 
+                    "label": "Container Type", 
                     "type": "choice", 
+                    "description": "Type of container", 
                     "options": [
                         {
                             "name": "micro-2.0", 
@@ -38,36 +67,7 @@
                             "name": "96-flat", 
                             "value": "96-flat"
                         }
-                    ], 
-                    "label": "Container Type"
-                }, 
-                "storage_conditions": {
-                    "default": "cold_80", 
-                    "description": "", 
-                    "type": "choice", 
-                    "options": [
-                        {
-                            "name": "cold_80", 
-                            "value": "cold_80"
-                        }, 
-                        {
-                            "name": "cold_20", 
-                            "value": "cold_20"
-                        }, 
-                        {
-                            "name": "cold_4", 
-                            "value": "cold_4"
-                        }, 
-                        {
-                            "name": "ambient", 
-                            "value": "ambient"
-                        }, 
-                        {
-                            "name": "warm_37", 
-                            "value": "warm_37"
-                        }
-                    ], 
-                    "label": "Container Storage"
+                    ]
                 }, 
                 "container_name": {
                     "default": "new_container", 
@@ -76,19 +76,19 @@
                     "label": "Container Name"
                 }
             }, 
-            "name": "CreateWaterContainer", 
-            "version": "1.1.157", 
+            "description": "Handy test protocol to mimick reagent containers in test mode by making a container with every well filled to max volume with water", 
+            "version": "1.1.158", 
             "command_string": "python -m protocols.create_water_container.protocol", 
             "preview": {
                 "refs": {}, 
                 "parameters": {
                     "volume_ul": 200, 
-                    "container_type": "96-deep", 
                     "storage_conditions": "cold_4", 
+                    "container_type": "96-deep", 
                     "container_name": "my container"
                 }
             }, 
-            "description": "Handy test protocol to mimick reagent containers in test mode by making a container with every well filled to max volume with water"
+            "name": "CreateWaterContainer"
         }, 
         {
             "inputs": {
@@ -132,7 +132,7 @@
                 }
             }, 
             "description": "Add TE to a tube with DNA, mix, measure concentration, and optionally split the tube (-80C) into a 4C storage working stock", 
-            "version": "1.1.167", 
+            "version": "1.1.168", 
             "command_string": "python -m protocols.dna_resuspension.protocol", 
             "additional_previews": [
                 {
@@ -202,22 +202,10 @@
         }, 
         {
             "inputs": {
-                "destroy_source_tube": {
-                    "default": false, 
-                    "required": true, 
-                    "type": "bool", 
-                    "description": "Destroy the source tube after using", 
-                    "label": "Destroy Source Tube?"
-                }, 
-                "test_mode": {
-                    "default": true, 
-                    "required": true, 
-                    "type": "bool", 
-                    "description": "Set this to checked if this is a test run", 
-                    "label": "Is this a test run?"
-                }, 
                 "antibiotic": {
                     "default": "cell_line", 
+                    "label": "Antibiotic", 
+                    "type": "choice", 
                     "options": [
                         {
                             "name": "cell line defined", 
@@ -240,12 +228,26 @@
                             "value": "spc"
                         }
                     ], 
-                    "type": "choice", 
-                    "description": "Which antibiotic to use", 
-                    "label": "Antibiotic"
+                    "description": "Which antibiotic to use"
+                }, 
+                "test_mode": {
+                    "default": true, 
+                    "required": true, 
+                    "type": "bool", 
+                    "description": "Set this to checked if this is a test run", 
+                    "label": "Is this a test run?"
+                }, 
+                "destroy_source_tube": {
+                    "default": false, 
+                    "required": true, 
+                    "type": "bool", 
+                    "description": "Destroy the source tube after using", 
+                    "label": "Destroy Source Tube?"
                 }, 
                 "second_antibiotic": {
                     "default": "None", 
+                    "label": "Second Antibiotic", 
+                    "type": "choice", 
                     "options": [
                         {
                             "name": "None", 
@@ -264,9 +266,7 @@
                             "value": "kan"
                         }
                     ], 
-                    "type": "choice", 
-                    "description": "Add a 2nd antibiotic", 
-                    "label": "Second Antibiotic"
+                    "description": "Add a 2nd antibiotic"
                 }, 
                 "bacteria_well": {
                     "required": true, 
@@ -274,7 +274,7 @@
                 }
             }, 
             "name": "BacteriaFreezing", 
-            "version": "1.0.99", 
+            "version": "1.0.100", 
             "command_string": "python -m protocols.bacteria_freezing.protocol", 
             "additional_previews": [
                 {
@@ -286,7 +286,10 @@
                                 "0": {
                                     "volume": "100.0:microliter", 
                                     "name": null, 
-                                    "properties": {}
+                                    "properties": {
+                                        "cell_line_name": "my cell line", 
+                                        "antibiotic": "amp"
+                                    }
                                 }
                             }, 
                             "type": "micro-2.0", 
@@ -295,9 +298,9 @@
                         }
                     }, 
                     "parameters": {
-                        "destroy_source_tube": true, 
-                        "test_mode": true, 
                         "antibiotic": "cell_line", 
+                        "test_mode": true, 
+                        "destroy_source_tube": true, 
                         "second_antibiotic": "strep", 
                         "bacteria_well": "bacteria_tube/0"
                     }
@@ -312,7 +315,10 @@
                             "0": {
                                 "volume": "100.0:microliter", 
                                 "name": null, 
-                                "properties": {}
+                                "properties": {
+                                    "cell_line_name": "my cell line", 
+                                    "antibiotic": "amp"
+                                }
                             }
                         }, 
                         "type": "micro-2.0", 
@@ -321,9 +327,9 @@
                     }
                 }, 
                 "parameters": {
-                    "destroy_source_tube": false, 
-                    "test_mode": true, 
                     "antibiotic": "cam", 
+                    "test_mode": true, 
+                    "destroy_source_tube": false, 
                     "second_antibiotic": "None", 
                     "bacteria_well": "bacteria_tube/0"
                 }
@@ -339,8 +345,24 @@
                     "description": "Needed for BAC plasmids. Requires EPI300 cells", 
                     "label": "Induce high copy number?"
                 }, 
+                "destroy_source_tube": {
+                    "default": false, 
+                    "required": true, 
+                    "type": "bool", 
+                    "description": "Destroy the source tube after using", 
+                    "label": "Destroy Source Tube?"
+                }, 
+                "test_mode": {
+                    "default": true, 
+                    "required": true, 
+                    "type": "bool", 
+                    "description": "Set this to checked if this is a test run", 
+                    "label": "Is this a test run?"
+                }, 
                 "antibiotic": {
                     "default": "cell_line", 
+                    "label": "Antibiotic", 
+                    "type": "choice", 
                     "options": [
                         {
                             "name": "cell line defined", 
@@ -355,23 +377,7 @@
                             "value": "kan"
                         }
                     ], 
-                    "type": "choice", 
-                    "description": "Which antibiotic to use", 
-                    "label": "Antibiotic"
-                }, 
-                "test_mode": {
-                    "default": true, 
-                    "required": true, 
-                    "type": "bool", 
-                    "description": "Set this to checked if this is a test run", 
-                    "label": "Is this a test run?"
-                }, 
-                "destroy_source_tube": {
-                    "default": false, 
-                    "required": true, 
-                    "type": "bool", 
-                    "description": "Destroy the source tube after using", 
-                    "label": "Destroy Source Tube?"
+                    "description": "Which antibiotic to use"
                 }, 
                 "bacteria_well": {
                     "required": true, 
@@ -379,7 +385,7 @@
                 }
             }, 
             "name": "BacteriaPelleting", 
-            "version": "1.0.69", 
+            "version": "1.0.70", 
             "command_string": "python -m protocols.bacteria_pelleting.protocol", 
             "additional_previews": [
                 {
@@ -391,7 +397,10 @@
                                 "0": {
                                     "volume": "115.0:microliter", 
                                     "name": null, 
-                                    "properties": {}
+                                    "properties": {
+                                        "cell_line_name": "my cell line", 
+                                        "antibiotic": "amp"
+                                    }
                                 }
                             }, 
                             "type": "micro-2.0", 
@@ -401,9 +410,9 @@
                     }, 
                     "parameters": {
                         "induce_high_copy_number": true, 
-                        "antibiotic": "cell_line", 
-                        "test_mode": true, 
                         "destroy_source_tube": true, 
+                        "test_mode": true, 
+                        "antibiotic": "cell_line", 
                         "bacteria_well": "bacteria_tube/0"
                     }
                 }, 
@@ -416,7 +425,10 @@
                                 "0": {
                                     "volume": "115.0:microliter", 
                                     "name": null, 
-                                    "properties": {}
+                                    "properties": {
+                                        "cell_line_name": "my cell line", 
+                                        "antibiotic": "amp"
+                                    }
                                 }
                             }, 
                             "type": "micro-2.0", 
@@ -426,9 +438,9 @@
                     }, 
                     "parameters": {
                         "induce_high_copy_number": false, 
-                        "antibiotic": "cell_line", 
-                        "test_mode": true, 
                         "destroy_source_tube": true, 
+                        "test_mode": true, 
+                        "antibiotic": "cell_line", 
                         "bacteria_well": "bacteria_tube/0"
                     }
                 }
@@ -442,7 +454,10 @@
                             "0": {
                                 "volume": "115.0:microliter", 
                                 "name": null, 
-                                "properties": {}
+                                "properties": {
+                                    "cell_line_name": "wt_hme63", 
+                                    "antibiotic": "amp"
+                                }
                             }
                         }, 
                         "type": "micro-2.0", 
@@ -452,9 +467,9 @@
                 }, 
                 "parameters": {
                     "induce_high_copy_number": false, 
-                    "antibiotic": "cell_line", 
-                    "test_mode": true, 
                     "destroy_source_tube": false, 
+                    "test_mode": true, 
+                    "antibiotic": "cell_line", 
                     "bacteria_well": "bacteria_tube/0"
                 }
             }, 
@@ -469,25 +484,10 @@
                     "description": "Set this to checked if this is a test run", 
                     "label": "Is this a test run?"
                 }, 
-                "oligo2_tube": {
-                    "required": true, 
-                    "type": "container", 
-                    "label": "Tube with 100uM Oligo2"
-                }, 
-                "negative_control": {
-                    "default": true, 
-                    "required": true, 
-                    "type": "bool", 
-                    "description": "", 
-                    "label": "Make a  negative control reaction?"
-                }, 
-                "linearized_vector_tube": {
-                    "required": true, 
-                    "type": "container", 
-                    "label": "Tube with linearized vector"
-                }, 
                 "antibiotic": {
                     "default": "N/A", 
+                    "label": "Antibiotic", 
+                    "type": "choice", 
                     "options": [
                         {
                             "name": "N/A", 
@@ -502,9 +502,24 @@
                             "value": "kan"
                         }
                     ], 
-                    "type": "choice", 
-                    "description": "Which antibiotic to use", 
-                    "label": "Antibiotic"
+                    "description": "Which antibiotic to use"
+                }, 
+                "negative_control": {
+                    "default": true, 
+                    "required": true, 
+                    "type": "bool", 
+                    "description": "", 
+                    "label": "Make a  negative control reaction?"
+                }, 
+                "linearized_vector_tube": {
+                    "required": true, 
+                    "type": "container", 
+                    "label": "Tube with linearized vector"
+                }, 
+                "oligo2_tube": {
+                    "required": true, 
+                    "type": "container", 
+                    "label": "Tube with 100uM Oligo2"
                 }, 
                 "transform_spread_pick": {
                     "default": false, 
@@ -520,7 +535,7 @@
                 }
             }, 
             "description": "Anneal two oligos together and then ligate to a linearized vector. Vector must have 'Concentration (DNA)' property like '4.0:nanograms/microliter'", 
-            "version": "1.0.89", 
+            "version": "1.0.90", 
             "command_string": "python -m protocols.anneal_oligos_and_ligate_to_vector.protocol", 
             "additional_previews": [
                 {
@@ -574,10 +589,10 @@
                     }, 
                     "parameters": {
                         "test_mode": true, 
-                        "oligo2_tube": "oligo2_tube", 
+                        "antibiotic": "amp", 
                         "negative_control": false, 
                         "linearized_vector_tube": "linearized_vector_tube", 
-                        "antibiotic": "amp", 
+                        "oligo2_tube": "oligo2_tube", 
                         "transform_spread_pick": true, 
                         "oligo1_tube": "oligo1_tube"
                     }
@@ -634,10 +649,10 @@
                 }, 
                 "parameters": {
                     "test_mode": true, 
-                    "oligo2_tube": "oligo2_tube", 
+                    "antibiotic": "kan", 
                     "negative_control": true, 
                     "linearized_vector_tube": "linearized_vector_tube", 
-                    "antibiotic": "kan", 
+                    "oligo2_tube": "oligo2_tube", 
                     "transform_spread_pick": true, 
                     "oligo1_tube": "oligo1_tube"
                 }
@@ -658,30 +673,80 @@
                     "description": "Set this to checked if this is a test run", 
                     "label": "Is this a test run?"
                 }, 
-                "oligo2_tube": {
-                    "required": true, 
-                    "type": "container", 
-                    "label": "Tube with Oligo2"
-                }, 
                 "product_length": {
                     "required": true, 
                     "type": "integer", 
                     "label": "Length of the PCR product in bp"
+                }, 
+                "primer_type1": {
+                    "default": "custom_inventory", 
+                    "label": "Choose Primer 1 type/well", 
+                    "type": "group-choice", 
+                    "options": [
+                        {
+                            "inputs": {
+                                "primer_well": {
+                                    "required": true, 
+                                    "type": "aliquot", 
+                                    "label": "Well with Primer 1"
+                                }
+                            }, 
+                            "name": "Use an inventory container", 
+                            "value": "custom_inventory"
+                        }, 
+                        {
+                            "inputs": {
+                                "resource_id": {
+                                    "required": true, 
+                                    "type": "string", 
+                                    "label": "Resource ID"
+                                }
+                            }, 
+                            "name": "Use a stock resource primer", 
+                            "value": "resource"
+                        }
+                    ], 
+                    "description": ""
                 }, 
                 "annealing_temp_c": {
                     "required": true, 
                     "type": "decimal", 
                     "label": "Annealing Temp in C"
                 }, 
-                "oligo1_tube": {
-                    "required": true, 
-                    "type": "container", 
-                    "label": "Tube with Oligo1"
-                }, 
                 "greater_than_65_percent_gc": {
                     "required": true, 
                     "type": "bool", 
                     "label": "Does either primer have >=65% GC content?"
+                }, 
+                "primer_type2": {
+                    "default": "custom_inventory", 
+                    "label": "Choose Primer 2 type/well", 
+                    "type": "group-choice", 
+                    "options": [
+                        {
+                            "inputs": {
+                                "primer_well": {
+                                    "required": true, 
+                                    "type": "aliquot", 
+                                    "label": "Well with Primer 2"
+                                }
+                            }, 
+                            "name": "Use an inventory container", 
+                            "value": "custom_inventory"
+                        }, 
+                        {
+                            "inputs": {
+                                "resource_id": {
+                                    "required": true, 
+                                    "type": "string", 
+                                    "label": "Resource ID"
+                                }
+                            }, 
+                            "name": "Use a stock resource primer", 
+                            "value": "resource"
+                        }
+                    ], 
+                    "description": ""
                 }, 
                 "product_name": {
                     "required": true, 
@@ -690,7 +755,7 @@
                 }
             }, 
             "description": "Run PCR of a DNA template with two primers. Template and Primer wells must have 'Concentration (DNA)' property like '4.0:nanograms/microliter'", 
-            "version": "1.0.85", 
+            "version": "1.0.86", 
             "command_string": "python -m protocols.pcr.protocol", 
             "additional_previews": [
                 {
@@ -745,11 +810,99 @@
                     "parameters": {
                         "template_well": "template_tube/0", 
                         "test_mode": true, 
-                        "oligo2_tube": "oligo2_tube", 
                         "product_length": 2000, 
+                        "primer_type1": {
+                            "inputs": {
+                                "custom_inventory": {
+                                    "primer_well": "oligo1_tube/0"
+                                }
+                            }, 
+                            "value": "custom_inventory"
+                        }, 
                         "annealing_temp_c": 65, 
-                        "oligo1_tube": "oligo1_tube", 
                         "greater_than_65_percent_gc": true, 
+                        "primer_type2": {
+                            "inputs": {
+                                "custom_inventory": {
+                                    "primer_well": "oligo2_tube/0"
+                                }
+                            }, 
+                            "value": "custom_inventory"
+                        }, 
+                        "product_name": "gal4p65"
+                    }
+                }, 
+                {
+                    "refs": {
+                        "template_tube": {
+                            "cover": null, 
+                            "label": "template_well", 
+                            "aliquots": {
+                                "0": {
+                                    "volume": "2000.0:microliter", 
+                                    "name": null, 
+                                    "properties": {}
+                                }
+                            }, 
+                            "type": "micro-2.0", 
+                            "id": "ct19gkzvxxk5ku", 
+                            "store": "cold_80"
+                        }, 
+                        "oligo2_tube": {
+                            "cover": null, 
+                            "label": "oligo2_tube", 
+                            "aliquots": {
+                                "0": {
+                                    "volume": "100.0:microliter", 
+                                    "name": null, 
+                                    "properties": {
+                                        "Concentration": "100uM"
+                                    }
+                                }
+                            }, 
+                            "type": "micro-2.0", 
+                            "id": "ct19gm27ck5yt9", 
+                            "store": "cold_4"
+                        }, 
+                        "oligo1_tube": {
+                            "cover": null, 
+                            "label": "oligo1_tube", 
+                            "aliquots": {
+                                "0": {
+                                    "volume": "100.0:microliter", 
+                                    "name": null, 
+                                    "properties": {
+                                        "Concentration": "100uM"
+                                    }
+                                }
+                            }, 
+                            "type": "micro-2.0", 
+                            "id": "ct19gm27cjdvrk", 
+                            "store": "cold_4"
+                        }
+                    }, 
+                    "parameters": {
+                        "template_well": "template_tube/0", 
+                        "test_mode": true, 
+                        "product_length": 2000, 
+                        "primer_type1": {
+                            "inputs": {
+                                "custom_inventory": {
+                                    "primer_well": "oligo1_tube/0"
+                                }
+                            }, 
+                            "value": "custom_inventory"
+                        }, 
+                        "annealing_temp_c": 65, 
+                        "greater_than_65_percent_gc": false, 
+                        "primer_type2": {
+                            "inputs": {
+                                "custom_inventory": {
+                                    "primer_well": "oligo2_tube/0"
+                                }
+                            }, 
+                            "value": "custom_inventory"
+                        }, 
                         "product_name": "gal4p65"
                     }
                 }
@@ -785,32 +938,30 @@
                         "type": "micro-2.0", 
                         "id": "ct19gm27ck5yt9", 
                         "store": "cold_4"
-                    }, 
-                    "oligo1_tube": {
-                        "cover": null, 
-                        "label": "oligo1_tube", 
-                        "aliquots": {
-                            "0": {
-                                "volume": "100.0:microliter", 
-                                "name": null, 
-                                "properties": {
-                                    "Concentration": "100uM"
-                                }
-                            }
-                        }, 
-                        "type": "micro-2.0", 
-                        "id": "ct19gm27cjdvrk", 
-                        "store": "cold_4"
                     }
                 }, 
                 "parameters": {
                     "template_well": "template_tube/0", 
                     "test_mode": true, 
-                    "oligo2_tube": "oligo2_tube", 
                     "product_length": 2000, 
+                    "primer_type1": {
+                        "inputs": {
+                            "resource": {
+                                "resource_id": "rs17tcp6dkdanb"
+                            }
+                        }, 
+                        "value": "resource"
+                    }, 
                     "annealing_temp_c": 65, 
-                    "oligo1_tube": "oligo1_tube", 
                     "greater_than_65_percent_gc": false, 
+                    "primer_type2": {
+                        "inputs": {
+                            "custom_inventory": {
+                                "primer_well": "oligo2_tube/0"
+                            }
+                        }, 
+                        "value": "custom_inventory"
+                    }, 
                     "product_name": "gal4p65"
                 }
             }, 
@@ -838,7 +989,7 @@
                 }
             }, 
             "description": "Gel Purify a well with dna inside. Well must have a dna_length property", 
-            "version": "1.0.81", 
+            "version": "1.0.82", 
             "command_string": "python -m protocols.gel_purify.protocol", 
             "additional_previews": [], 
             "preview": {
@@ -915,6 +1066,8 @@
                 }, 
                 "antibiotic": {
                     "default": "cell_line", 
+                    "label": "Antibiotic", 
+                    "type": "choice", 
                     "options": [
                         {
                             "name": "cell line defined", 
@@ -937,9 +1090,7 @@
                             "value": "spc"
                         }
                     ], 
-                    "type": "choice", 
-                    "description": "Which antibiotic to use", 
-                    "label": "Antibiotic"
+                    "description": "Which antibiotic to use"
                 }, 
                 "bacteria_well": {
                     "required": true, 
@@ -952,19 +1103,19 @@
                     "description": "", 
                     "label": "Measure OD after incubate?"
                 }, 
-                "slow_growth": {
-                    "default": false, 
-                    "required": true, 
-                    "type": "bool", 
-                    "description": "We will multiply the growth medium by 8x and consolidate before minipreping", 
-                    "label": "Does the bacteria grow slowly?"
-                }, 
                 "destroy_source_tube": {
                     "default": false, 
                     "required": true, 
                     "type": "bool", 
                     "description": "Destroy the source tube after using", 
                     "label": "Destroy Source Tube?"
+                }, 
+                "slow_growth": {
+                    "default": false, 
+                    "required": true, 
+                    "type": "bool", 
+                    "description": "We will multiply the growth medium by 8x and consolidate before minipreping", 
+                    "label": "Does the bacteria grow slowly?"
                 }, 
                 "incubate_hours": {
                     "default": 24, 
@@ -982,7 +1133,7 @@
                 }
             }, 
             "name": "Miniprep", 
-            "version": "1.0.56", 
+            "version": "1.0.57", 
             "command_string": "python -m protocols.miniprep.protocol", 
             "additional_previews": [
                 {
@@ -994,7 +1145,10 @@
                                 "0": {
                                     "volume": "100.0:microliter", 
                                     "name": null, 
-                                    "properties": {}
+                                    "properties": {
+                                        "cell_line_name": "my cell line", 
+                                        "antibiotic": "amp"
+                                    }
                                 }
                             }, 
                             "type": "micro-2.0", 
@@ -1021,7 +1175,10 @@
                                 "0": {
                                     "volume": "100.0:microliter", 
                                     "name": null, 
-                                    "properties": {}
+                                    "properties": {
+                                        "cell_line_name": "my cell line", 
+                                        "antibiotic": "amp"
+                                    }
                                 }
                             }, 
                             "type": "micro-2.0", 
@@ -1034,8 +1191,8 @@
                         "antibiotic": "cell_line", 
                         "bacteria_well": "bacteria_tube/0", 
                         "measure_od": true, 
-                        "destroy_source_tube": false, 
                         "slow_growth": false, 
+                        "destroy_source_tube": false, 
                         "incubate_hours": 56, 
                         "induce_high_copy_number": true
                     }
@@ -1049,7 +1206,10 @@
                                 "0": {
                                     "volume": "100.0:microliter", 
                                     "name": null, 
-                                    "properties": {}
+                                    "properties": {
+                                        "cell_line_name": "my cell line", 
+                                        "antibiotic": "amp"
+                                    }
                                 }
                             }, 
                             "type": "micro-2.0", 
@@ -1062,8 +1222,8 @@
                         "antibiotic": "cell_line", 
                         "bacteria_well": "bacteria_tube/0", 
                         "measure_od": true, 
-                        "slow_growth": true, 
                         "destroy_source_tube": false, 
+                        "slow_growth": true, 
                         "incubate_hours": 56, 
                         "induce_high_copy_number": false
                     }
@@ -1078,7 +1238,10 @@
                             "0": {
                                 "volume": "100.0:microliter", 
                                 "name": null, 
-                                "properties": {}
+                                "properties": {
+                                    "cell_line_name": "my cell line", 
+                                    "antibiotic": "amp"
+                                }
                             }
                         }, 
                         "type": "micro-2.0", 
@@ -1091,8 +1254,8 @@
                     "antibiotic": "cell_line", 
                     "bacteria_well": "bacteria_tube/0", 
                     "measure_od": true, 
-                    "slow_growth": true, 
                     "destroy_source_tube": false, 
+                    "slow_growth": true, 
                     "incubate_hours": 24, 
                     "induce_high_copy_number": true
                 }
